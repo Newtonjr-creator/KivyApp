@@ -7,14 +7,14 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04  # Use the latest stable Ubuntu version for compatibility
 
     steps:
       # Step 1: Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Step 2: Cache Buildozer global directory
+      # Step 2: Cache Buildozer global directory (to speed up subsequent builds)
       - name: Cache Buildozer global directory
         uses: actions/cache@v3
         with:
@@ -27,7 +27,7 @@ jobs:
         with:
           python-version: '3.x'
 
-      # Step 4: Install system dependencies
+      # Step 4: Install system dependencies (including AIDL and required tools)
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -44,9 +44,11 @@ jobs:
             libtool \
             cmake \
             unzip \
-            wget
+            wget \
+            pkg-config \
+            libncurses5 libstdc++6 lib32z1 libbz2-1.0 lib32stdc++6
 
-      # Step 5: Install Android SDK and tools
+      # Step 5: Install Android SDK and command-line tools
       - name: Install Android SDK
         run: |
           mkdir -p ~/android-sdk/cmdline-tools
@@ -67,7 +69,15 @@ jobs:
           pip install --force-reinstall cython
           pip install buildozer
 
-      # Step 7: Run Buildozer to build the app
+      # Step 7: Prepare AIDL
+      - name: Ensure AIDL
+        run: |
+          export ANDROID_HOME=~/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+          export PATH=$ANDROID_HOME/platform-tools:$PATH
+          sdkmanager "platforms;android-34" --install
+
+      # Step 8: Run Buildozer to build the app
       - name: Build with Buildozer
         run: |
           export ANDROID_HOME=~/android-sdk
@@ -75,7 +85,7 @@ jobs:
           export PATH=$ANDROID_HOME/platform-tools:$PATH
           buildozer android debug
 
-      # Step 8: Upload the APK artifact
+      # Step 9: Upload the APK artifact
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
