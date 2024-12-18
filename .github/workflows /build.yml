@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04  # Ensure compatibility with latest Ubuntu
+    runs-on: ubuntu-24.04
 
     steps:
       # Step 1: Checkout the repository
@@ -43,22 +43,38 @@ jobs:
             python3-dev \
             libtool \
             cmake \
-            unzip
+            unzip \
+            wget
 
-      # Step 5: Force install Cython and verify
-      - name: Install and Verify Cython
+      # Step 5: Install Android SDK and tools
+      - name: Install Android SDK
+        run: |
+          mkdir -p ~/android-sdk
+          cd ~/android-sdk
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+          unzip cmdline-tools.zip
+          mkdir -p cmdline-tools/latest
+          mv cmdline-tools/* cmdline-tools/latest/
+          export ANDROID_HOME=~/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+          export PATH=$ANDROID_HOME/platform-tools:$PATH
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "build-tools;34.0.0" "platforms;android-34" "cmdline-tools;latest"
+
+      # Step 6: Install Python dependencies
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
           pip install --force-reinstall cython
-          python -c "import Cython; print(f'Cython version: {Cython.__version__}')"
-
-      # Step 6: Install Buildozer
-      - name: Install Buildozer
-        run: pip install buildozer
+          pip install buildozer
 
       # Step 7: Run Buildozer to build the app
       - name: Build with Buildozer
-        run: buildozer android debug
+        run: |
+          export ANDROID_HOME=~/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+          export PATH=$ANDROID_HOME/platform-tools:$PATH
+          buildozer android debug
 
       # Step 8: Upload the APK artifact
       - name: Upload APK
