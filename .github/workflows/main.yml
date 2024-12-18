@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # Optional, for future-proofing
 
     steps:
       - name: Checkout repository
@@ -15,7 +15,7 @@ jobs:
 
       # Cache Buildozer directory
       - name: Cache Buildozer global directory
-        uses: actions/cache@v2
+        uses: actions/cache@v3  # Updated to v3
         with:
           path: ~/.buildozer
           key: buildozer-${{ hashFiles('**/buildozer.spec') }}
@@ -38,7 +38,7 @@ jobs:
 
       # Upload APK
       - name: Upload APK
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3  # Updated to v3
         with:
           name: flappybird-apk
           path: bin/flappybird-1.0-debug.apk
