@@ -1,7 +1,7 @@
 [app]
 
 # (str) Title of your application
-title = Flappy Bird 
+title = FlappyBird 
 
 # (str) Package name
 package.name = flappybird 
@@ -10,7 +10,7 @@ package.name = flappybird
 package.domain = com.abhishek.app
 
 # (str) Source code where the main.py live
-source.dir = .
+source.dir = /storage/emulated/0/flappybird 
 
 # (list) Source files to include (let empty to include all the files)
 source.include_exts = py,png,jpg,kv,atlas,wav
