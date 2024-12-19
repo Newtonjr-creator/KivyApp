@@ -1,49 +1,20 @@
-name: Build APK with Buildozer
+name: Build APK
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    
     steps:
       # Checkout the repository
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v2
 
-      # Set up Python
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-
-      # Install dependencies for Buildozer
-      - name: Install Buildozer dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            python3-dev \
-            python3-pip \
-            git \
-            unzip \
-            openjdk-8-jdk \
-            libssl-dev \
-            libncurses5-dev \
-            libffi-dev \
-            liblzma-dev \
-            zlib1g-dev \
-            libjpeg-dev \
-            libpng-dev \
-            libfreetype6-dev \
-            libxml2-dev \
-            libxslt1-dev
-
-      # Install and setup Android SDK
+      # Install dependencies and setup Android SDK
       - name: Install Android SDK tools
         run: |
           # Define SDK location
@@ -54,8 +25,11 @@ jobs:
           unzip -q $HOME/commandlinetools.zip -d $ANDROID_SDK_ROOT
           rm $HOME/commandlinetools.zip
 
-          # Ensure cmdline-tools is correctly linked
-          mv $ANDROID_SDK_ROOT/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
+          # Check if cmdline-tools directory exists, if not, create the latest directory
+          if [ ! -d "$ANDROID_SDK_ROOT/cmdline-tools" ]; then
+            mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
+            mv $ANDROID_SDK_ROOT/cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest/
+          fi
 
           # Update SDK manager
           yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --update
@@ -65,53 +39,19 @@ jobs:
         run: |
           yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
 
-      # Install build tools and required packages
+      # Install required SDK packages
       - name: Install required SDK packages
         run: |
-          # Install specific build tools and platforms
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager \
-            "platforms;android-30" \
-            "build-tools;30.0.3" \
-            "ndk;21.4.7075529" \
-            "platform-tools" \
-            "tools" \
-            "extras;android;m2repository" \
-            "extras;google;m2repository"
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3" "platform-tools" "platforms;android-30"
 
-          # Install AIDL tool (if necessary)
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "aidl"
-
-      # Verify AIDL installation
-      - name: Verify AIDL installation
-        run: |
-          if ! command -v aidl &> /dev/null; then
-            echo "AIDL not found, installing now..."
-            $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "aidl"
-          else
-            echo "AIDL is already installed."
-          fi
-
-      # Install Buildozer
-      - name: Install Buildozer
-        run: |
-          pip install --upgrade pip
-          pip install buildozer
-
-      # Set up environment variable for Android SDK
-      - name: Set up Android SDK environment variable
-        run: |
-          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH" >> $GITHUB_ENV
-
-      # Build APK with Buildozer
+      # Build APK using Buildozer
       - name: Build APK with Buildozer
         run: |
-          cd /storage/emulated/0/flappybird
-          buildozer android debug
+          # Install Buildozer if not already installed
+          pip install buildozer
 
-      # Upload APK as artifact
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: flappybird-apk
-          path: /storage/emulated/0/flappybird/bin/*.apk
+          # Navigate to project directory
+          cd /path/to/your/project
+
+          # Run Buildozer to build APK
+          buildozer android debug
