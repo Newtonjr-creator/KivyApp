@@ -1,4 +1,4 @@
-name: CLI
+name: Build and Package APK
 
 on:
   push:
@@ -69,13 +69,12 @@ jobs:
     # Step 5: Set up Buildozer configurations
     - name: Configure Buildozer
       run: |
-        cd /storage/emulated/0/flappybird
-        cp /storage/emulated/0/flappybird/buildozer.spec /home/runner/work/my-repo/buildozer.spec
+        cp $GITHUB_WORKSPACE/buildozer.spec /home/runner/work/my-repo/buildozer.spec
 
     # Step 6: Check if Buildozer Spec exists
     - name: Verify buildozer.spec file
       run: |
-        ls -la /home/runner/work/my-repo/
+        ls -la $GITHUB_WORKSPACE/
 
     # Step 7: Install necessary Android dependencies for Buildozer
     - name: Install Android dependencies
@@ -85,26 +84,26 @@ jobs:
     # Step 8: Run Buildozer to Build APK
     - name: Build APK using Buildozer
       run: |
-        cd /storage/emulated/0/flappybird
+        cd $GITHUB_WORKSPACE
         buildozer android debug
 
     # Step 9: Deploy APK to device (optional, only if needed)
     - name: Deploy APK to device
       run: |
-        cd /storage/emulated/0/flappybird
+        cd $GITHUB_WORKSPACE
         buildozer android deploy run
 
     # Step 10: Check APK generation (optional verification step)
     - name: Verify APK Generation
       run: |
-        ls -la /storage/emulated/0/flappybird/bin/
+        ls -la $GITHUB_WORKSPACE/bin/
 
     # Step 11: Archive APK as artifact
     - name: Archive APK
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: flappybird-apk
-        path: /storage/emulated/0/flappybird/bin/*.apk
+        path: $GITHUB_WORKSPACE/bin/*.apk
 
     # Step 12: Clean up environment (optional)
     - name: Clean up Android SDK
@@ -118,7 +117,7 @@ jobs:
 
     # Step 14: Upload Build Logs (optional)
     - name: Upload Build Logs
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: build-logs
         path: buildozer-*.log
