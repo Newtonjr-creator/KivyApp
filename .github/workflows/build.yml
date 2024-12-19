@@ -14,19 +14,19 @@ jobs:
       - name: Get Date
         id: get-date
         run: |
-          echo "::set-output name=date::$(/bin/date -u "+%Y%m%d")"
+          echo "date=$(date -u "+%Y%m%d")" >> $GITHUB_ENV
         shell: bash
 
       - name: Cache Buildozer global directory
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: .buildozer_global
           key: buildozer-global-${{ hashFiles('buildozer.spec') }}
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: .buildozer
-          key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
+          key: ${{ runner.os }}-${{ env.date }}-${{ hashFiles('buildozer.spec') }}
 
       - name: Install Android SDK and Build Tools
         run: |
@@ -36,6 +36,9 @@ jobs:
           # Set environment variables for SDK
           echo "ANDROID_HOME=/usr/local/android-sdk" >> $GITHUB_ENV
           echo "PATH=$PATH:/usr/local/android-sdk/tools:/usr/local/android-sdk/platform-tools:/usr/local/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
+
+          # Create the necessary directories if they do not exist
+          sudo mkdir -p /usr/local/android-sdk/cmdline-tools
 
           # Download and unzip Android SDK Command-line Tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -P /tmp
