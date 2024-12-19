@@ -37,26 +37,27 @@ jobs:
         mkdir -p /home/runner/android-sdk/cmdline-tools/latest
         mv /home/runner/android-sdk/cmdline-tools/cmdline-tools/* /home/runner/android-sdk/cmdline-tools/latest
 
-    # Set SDK Manager Path
-    - name: Set SDK Manager Path
+    # Set ANDROID_HOME Environment Variable to the Correct SDK Path
+    - name: Set ANDROID_HOME Environment Variable
       run: |
-        echo "export PATH=/home/runner/android-sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
-        echo "SDK Manager path set to: /home/runner/android-sdk/cmdline-tools/latest/bin"
+        echo "ANDROID_HOME=/home/runner/android-sdk/cmdline-tools/latest" >> $GITHUB_ENV
+        echo "PATH=$PATH:/home/runner/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
 
-    # Ensure sdkmanager is working
-    - name: Verify SDK Manager Installation
+    # Verify sdkmanager Path
+    - name: Verify sdkmanager Path
       run: |
-        /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager --list
+        echo $ANDROID_HOME
+        sdkmanager --list
 
-    # Accept Android SDK Licenses
+    # Accept SDK Licenses
     - name: Accept SDK Licenses
       run: |
-        yes | /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+        yes | sdkmanager --licenses
 
     # Install Android Build Tools and Dependencies
     - name: Install Android Build Tools and Dependencies
       run: |
-        /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager \
+        sdkmanager \
           "platform-tools" \
           "build-tools;33.0.2" \
           "platforms;android-33" \
