@@ -57,7 +57,12 @@ jobs:
         AIDL_PATH="/home/runner/android-sdk/build-tools/33.0.2/aidl"
         if [ ! -f "$AIDL_PATH" ]; then
           echo "AIDL is not installed. Please ensure 'build-tools' are correctly configured."
-          exit 1
+          echo "Reinstalling build-tools..."
+          /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2"
+          if [ ! -f "$AIDL_PATH" ]; then
+            echo "AIDL installation failed."
+            exit 1
+          fi
         else
           echo "AIDL found at $AIDL_PATH"
         fi
