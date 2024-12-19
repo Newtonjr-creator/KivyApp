@@ -40,7 +40,8 @@ jobs:
     # Set SDK Manager Path
     - name: Set SDK Manager Path
       run: |
-        export PATH=/home/runner/android-sdk/cmdline-tools/latest/bin:$PATH
+        echo "export PATH=/home/runner/android-sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
+        echo "SDK Manager path set to: /home/runner/android-sdk/cmdline-tools/latest/bin"
 
     # Ensure sdkmanager is working
     - name: Verify SDK Manager Installation
@@ -52,7 +53,7 @@ jobs:
       run: |
         yes | /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
 
-    # Install Build Tools, Platform Tools, and Extras
+    # Install Android Build Tools and Dependencies
     - name: Install Android Build Tools and Dependencies
       run: |
         /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager \
