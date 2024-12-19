@@ -9,69 +9,129 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Install dependencies
+      # Step 2: Install required system dependencies
+      - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y openjdk-8-jdk wget unzip
+          sudo apt-get install -y openjdk-8-jdk wget unzip curl python3-pip python3-setuptools python3-dev libffi-dev
 
+      # Step 3: Set up Android SDK directories
       - name: Set up Android SDK
         run: |
-          # Create Android SDK directory and latest directory
+          # Create directory structure for SDK tools
           mkdir -p $HOME/Android/cmdline-tools/latest
+          mkdir -p $HOME/Android/cmdline-tools/previous
 
-          # Download and extract Android command line tools
+      # Step 4: Download Android SDK command-line tools
+      - name: Download Android SDK command-line tools
+        run: |
           wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip -O commandlinetools.zip
           unzip commandlinetools.zip -d $HOME/Android/cmdline-tools
           rm commandlinetools.zip
 
-          # Move extracted tools to 'latest' directory
+      # Step 5: Move files to 'latest' directory
+      - name: Move to 'latest' directory
+        run: |
           mv $HOME/Android/cmdline-tools/cmdline-tools/* $HOME/Android/cmdline-tools/latest/
 
-          # Verify the folder structure
-          ls -R $HOME/Android/cmdline-tools
-
-          # Set environment variables for Android SDK
+      # Step 6: Set up environment variables
+      - name: Set up environment variables
+        run: |
           echo "export ANDROID_SDK_ROOT=$HOME/Android" >> ~/.bashrc
-          echo "export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/build-tools/36.0.0:$PATH" >> ~/.bashrc
+          echo "export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/build-tools:$PATH" >> ~/.bashrc
           source ~/.bashrc
 
+      # Step 7: Verify sdkmanager location
       - name: Verify sdkmanager location
         run: |
-          # Verify that sdkmanager exists in the expected location
           ls $HOME/Android/cmdline-tools/latest/bin/sdkmanager || echo "sdkmanager not found"
 
+      # Step 8: Accept Android SDK licenses
       - name: Accept Android SDK licenses
         run: |
-          # Accept SDK licenses
           yes | $HOME/Android/cmdline-tools/latest/bin/sdkmanager --licenses
 
-      - name: Update SDK manager and install necessary packages
+      # Step 9: Update SDK manager to get latest package list
+      - name: Update SDK manager
         run: |
-          # Update SDK manager and check available packages
           $HOME/Android/cmdline-tools/latest/bin/sdkmanager --update
-          $HOME/Android/cmdline-tools/latest/bin/sdkmanager --list
 
-          # Install required SDK packages with a fallback build tools version
+      # Step 10: Install SDK packages (build tools, platforms)
+      - name: Install required SDK packages
+        run: |
           $HOME/Android/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;30.0.3" "platforms;android-28" "sources;android-28"
 
+      # Step 11: Install Python dependencies
       - name: Install Python dependencies
         run: |
           python3 -m pip install --upgrade pip
           pip install cython
           pip install buildozer
           pip install kivy
+          pip install pygame
 
-      - name: Build APK with Buildozer
+      # Step 12: Install Buildozer dependencies (for building Android APK)
+      - name: Install Buildozer dependencies
         run: |
-          # Navigate to the project directory and build APK with Buildozer
+          sudo apt-get install -y python3-venv
+          python3 -m venv buildozer-venv
+          source buildozer-venv/bin/activate
+          pip install --upgrade pip
+          pip install buildozer
+
+      # Step 13: Configure Buildozer spec file
+      - name: Configure Buildozer
+        run: |
+          cd /storage/emulated/0/flappybird
+          buildozer init  # if not already done
+          sed -i 's/^# (default is no).*/(default is yes)/' buildozer.spec
+          sed -i 's/^# requirements =.*/requirements = python3,kivy,pygame/' buildozer.spec
+          sed -i 's/^# android.permissions =.*/android.permissions = WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE/' buildozer.spec
+          sed -i 's/^# source.include_exts =.*/source.include_exts = py,png,jpg,kv,atlas,ogg,mp3/' buildozer.spec
+          sed -i 's/^# (list of comma separated requirements)/requirements = python3,kivy,pygame/' buildozer.spec
+
+      # Step 14: Check the file paths (Make sure directories for assets exist)
+      - name: Check assets directories
+        run: |
+          ls /storage/emulated/0/flappybird/gallery/sprites
+          ls /storage/emulated/0/flappybird/gallery/audio
+
+      # Step 15: Build APK with Buildozer (Debug build)
+      - name: Build APK
+        run: |
           cd /storage/emulated/0/flappybird
           buildozer android debug
 
-      - name: Upload APK
+      # Step 16: Check build output for errors
+      - name: Check build output
+        run: |
+          tail -n 100 /storage/emulated/0/flappybird/.buildozer/android/platform/build/dists/*/output.txt
+
+      # Step 17: Clean build (if needed)
+      - name: Clean previous builds (optional)
+        run: |
+          cd /storage/emulated/0/flappybird
+          buildozer android clean
+
+      # Step 18: Retry building APK if previous step fails
+      - name: Retry build (if failed)
+        if: failure()
+        run: |
+          cd /storage/emulated/0/flappybird
+          buildozer android debug
+
+      # Step 19: Upload APK to GitHub as artifact
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v3
         with:
           name: flappybird-apk
           path: /storage/emulated/0/flappybird/bin/*.apk
+
+      # Step 20: Final success message
+      - name: Success message
+        run: |
+          echo "APK successfully built and uploaded!"
