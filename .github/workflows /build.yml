@@ -1,4 +1,4 @@
-name: Build APK
+name: Build APK for flappybird
 
 on:
   push:
@@ -10,97 +10,91 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Checkout the repository
-    - name: Checkout Repository
-      uses: actions/checkout@v3
+    # 1. Checkout the code
+    - name: Checkout the code
+      uses: actions/checkout@v2
 
-    # Set up Java environment
-    - name: Set up Java
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'zulu'
-        java-version: '11'
+    # 2. Create the Android SDK directory
+    - name: Create SDK directory
+      run: mkdir -p /home/runner/android-sdk/cmdline-tools
 
-    # Install dependencies
-    - name: Install System Dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y wget unzip python3 python3-pip
-
-    # Download Android SDK Command Line Tools
+    # 3. Download Android SDK Command Line Tools
     - name: Download Android SDK Command Line Tools
       run: |
-        mkdir -p /home/runner/android-sdk
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O commandlinetools.zip
-        unzip -o commandlinetools.zip -d /home/runner/android-sdk/cmdline-tools
-        rm commandlinetools.zip
+        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O commandlinetools.zip
 
-    # Ensure the sdkmanager path is in place
-    - name: Ensure SDK Manager Path is Correct
+    # 4. Unzip the downloaded command line tools
+    - name: Extract Android SDK Tools
+      run: unzip -o commandlinetools.zip -d /home/runner/android-sdk/cmdline-tools
+
+    # 5. Remove the zip file to save space
+    - name: Cleanup SDK ZIP
+      run: rm commandlinetools.zip
+
+    # 6. Move extracted tools to 'latest' directory
+    - name: Organize Android SDK Tools
       run: |
         mkdir -p /home/runner/android-sdk/cmdline-tools/latest
         mv /home/runner/android-sdk/cmdline-tools/cmdline-tools/* /home/runner/android-sdk/cmdline-tools/latest
 
-        # Create necessary symlinks to make sdkmanager accessible
-        SDKMANAGER_PATH="/home/runner/.buildozer/android/platform/android-sdk/tools/bin"
-        mkdir -p $SDKMANAGER_PATH
-        ln -sf /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager $SDKMANAGER_PATH/sdkmanager
-
-    # Accept Android SDK Licenses
-    - name: Accept SDK Licenses
+    # 7. Create a symbolic link for sdkmanager
+    - name: Create SDKManager Symlink
       run: |
-        yes | /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+        mkdir -p /home/runner/android-sdk/tools/bin
+        ln -sf /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager /home/runner/android-sdk/tools/bin/sdkmanager
 
-    # Install Build Tools, Platform Tools, and Extras
-    - name: Install Android Build Tools and Dependencies
-      run: |
-        /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager \
-          "platform-tools" \
-          "build-tools;33.0.2" \
-          "platforms;android-33" \
-          "extras;android;m2repository" \
-          "extras;google;m2repository"
+    # 8. Accept Android SDK Licenses
+    - name: Accept Android SDK Licenses
+      run: yes | /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
 
-    # Install AIDL if not found
-    - name: Verify and Install AIDL
-      run: |
-        AIDL_PATH="/home/runner/android-sdk/build-tools/33.0.2/aidl"
-        if [ ! -f "$AIDL_PATH" ]; then
-          echo "AIDL is not installed. Attempting independent installation..."
-          /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2"
-          if [ -f "$AIDL_PATH" ]; then
-            echo "AIDL successfully installed."
-          else
-            echo "AIDL installation failed. Exiting..."
-            exit 1
-          fi
-        else
-          echo "AIDL found at $AIDL_PATH"
-        fi
+    # 9. Install Android Platform Tools
+    - name: Install Platform Tools
+      run: /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools"
 
-    # Ensure Build Tools Path is correctly linked
-    - name: Ensure Build Tools Path
-      run: |
-        mkdir -p /home/runner/.buildozer/android/platform/android-sdk
-        ln -sf /home/runner/android-sdk/build-tools /home/runner/.buildozer/android/platform/android-sdk/
+    # 10. Install Android Platforms
+    - name: Install Android Platform 33
+      run: /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-33"
 
-    # Install Python dependencies (e.g., buildozer and cython)
-    - name: Install Python Dependencies
-      run: |
-        pip3 install --upgrade pip
-        pip3 install buildozer Cython
+    # 11. Install Android Build Tools
+    - name: Install Build Tools 33.0.2
+      run: /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2"
 
-    # Build APK with Buildozer (add specific environment variable to ensure SDK is used)
+    # 12. Install NDK
+    - name: Install NDK
+      run: /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager "ndk;25.2.9519653"
+
+    # 13. Set ANDROID_HOME environment variable
+    - name: Set ANDROID_HOME Variable
+      run: echo "ANDROID_HOME=/home/runner/android-sdk" >> $GITHUB_ENV
+
+    # 14. Set ANDROID_SDK_ROOT environment variable
+    - name: Set ANDROID_SDK_ROOT Variable
+      run: echo "ANDROID_SDK_ROOT=/home/runner/android-sdk" >> $GITHUB_ENV
+
+    # 15. Update system packages
+    - name: Update System Packages
+      run: sudo apt update
+
+    # 16. Install Python3 and pip
+    - name: Install Python3 and pip
+      run: sudo apt install -y python3 python3-pip
+
+    # 17. Install Buildozer
+    - name: Install Buildozer
+      run: pip install buildozer
+
+    # 18. Build the APK using Buildozer
     - name: Build APK
-      run: |
-        export ANDROIDSDK=/home/runner/android-sdk
-        export ANDROIDNDK=/home/runner/android-sdk/ndk-bundle
-        cd $GITHUB_WORKSPACE
-        buildozer android debug
+      run: buildozer -v android debug
 
-    # Archive APK for download
-    - name: Upload APK
-      uses: actions/upload-artifact@v3
+    # 19. Verify APK Output
+    - name: Verify APK Output
+      run: ls -al bin/*.apk
+
+    # 20. Upload APK to GitHub Releases
+    - name: Upload APK to GitHub Releases
+      if: success()
+      uses: ncipollo/release-action@v1
       with:
-        name: FlappyBird-APK
-        path: $GITHUB_WORKSPACE/bin/*.apk
+        artifacts: 'bin/*.apk'
+        token: ${{ secrets.GITHUB_TOKEN }}
