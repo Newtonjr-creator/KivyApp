@@ -20,28 +20,25 @@ jobs:
       - name: Set up Android SDK
         run: |
           # Create the Android SDK directory
-          mkdir -p $HOME/Android
-          cd $HOME/Android
+          mkdir -p $HOME/Android/cmdline-tools
 
           # Download the latest command line tools from Android
           wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip -O commandlinetools.zip
-          unzip commandlinetools.zip
+          unzip commandlinetools.zip -d $HOME/Android/cmdline-tools
           rm commandlinetools.zip
 
-          # Move extracted tools to the correct location
-          mkdir -p $HOME/Android/cmdline-tools/latest
-          mv cmdline-tools/* $HOME/Android/cmdline-tools/latest/
+          # Move extracted tools to 'latest' folder
+          mv $HOME/Android/cmdline-tools/cmdline-tools/* $HOME/Android/cmdline-tools/latest/
 
           # Set environment variables for the Android SDK
           echo "export ANDROID_SDK_ROOT=$HOME/Android" >> ~/.bashrc
           echo "export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/build-tools/36.0.0:$PATH" >> ~/.bashrc
           source ~/.bashrc
 
-      - name: Check sdkmanager path
+      - name: Verify sdkmanager location
         run: |
           # Check if sdkmanager is found
-          echo "Checking sdkmanager location"
-          ls $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager
+          ls $HOME/Android/cmdline-tools/latest/bin/sdkmanager || echo "sdkmanager not found"
 
       - name: Accept Android SDK licenses
         run: |
