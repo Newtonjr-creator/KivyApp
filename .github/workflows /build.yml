@@ -78,8 +78,8 @@ jobs:
           echo "PATH=$ANDROID_HOME/build-tools/36.0.0-rc3:$PATH" >> $GITHUB_ENV
           source $GITHUB_ENV
 
-      # Step 6: Verify AIDL Availability
-      - name: Verify AIDL
+      # Step 6: Check if AIDL is available
+      - name: Verify AIDL availability
         run: |
           source $GITHUB_ENV
           echo "Checking AIDL version..."
@@ -90,6 +90,9 @@ jobs:
             aidl --version
           else
             echo "AIDL command not found. Please ensure it is installed."
+            # Check if build tools folder exists and contains AIDL
+            echo "Checking if AIDL is installed under build-tools directory..."
+            ls $ANDROID_HOME/build-tools
             exit 1
           fi
           echo "AIDL is installed and available."
