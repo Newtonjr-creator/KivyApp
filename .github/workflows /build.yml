@@ -1,42 +1,92 @@
 name: CI
+
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
-      - uses: actions/checkout@v2
+      # Step 1: Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-      # used to cache dependencies with a timeout
-      - name: Get Date
-        id: get-date
+      # Step 2: Install system dependencies
+      - name: Install system dependencies
         run: |
-          echo "::set-output name=date::$(/bin/date -u "+%Y%m%d")"
-        shell: bash
+          sudo apt-get update
+          sudo apt-get install -y \
+            git \
+            openjdk-17-jdk \
+            libssl-dev \
+            libffi-dev \
+            zlib1g-dev \
+            autoconf \
+            automake \
+            build-essential \
+            python3-dev \
+            libtool \
+            cmake \
+            unzip \
+            curl
 
-      - name: Cache Buildozer global directory
-        uses: actions/cache@v2
-        with:
-          path: .buildozer_global
-          key: buildozer-global-${{ hashFiles('buildozer.spec') }} # Replace with your path
+      # Step 3: Install Python dependencies
+      - name: Install Python dependencies
+        run: |
+          python3 -m pip install --upgrade pip setuptools wheel
+          pip install buildozer cython
 
-      - uses: actions/cache@v2
-        with:
-          path: .buildozer
-          key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
+      # Step 4: Set up Android SDK
+      - name: Set up Android SDK
+        run: |
+          # Create Android SDK directory and download command line tools
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          curl -o sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          unzip -q sdk-tools.zip -d $HOME/android-sdk/cmdline-tools
+          mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+          
+          # Set environment variables
+          export ANDROID_HOME=$HOME/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+          
+          # Accept licenses automatically
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+          
+          # Install required Android SDK components without the problematic 'extra-android-m2repository'
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "platform-tools" \
+            "platforms;android-34" \
+            "build-tools;34.0.0" \
+            "build-tools;36.0.0-rc3" \
+            "android-ndk" 
 
+      # Step 5: Set Environment Variables for Android SDK
+      - name: Add environment variables
+        run: |
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/build-tools/34.0.0:$PATH" >> $GITHUB_ENV
+          echo "PATH=$ANDROID_HOME/build-tools/36.0.0-rc3:$PATH" >> $GITHUB_ENV
+          source $GITHUB_ENV
+
+      # Step 6: Verify AIDL Availability
+      - name: Verify AIDL
+        run: |
+          source $GITHUB_ENV
+          which aidl || echo "AIDL not found, setup failed."
+          $ANDROID_HOME/build-tools/34.0.0/aidl --version || echo "AIDL version check failed."
+
+      # Step 7: Build the APK
       - name: Build with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
-        id: buildozer
-        with:
-          command: buildozer android debug
-          buildozer_version: master
+        run: |
+          source $GITHUB_ENV
+          buildozer android debug
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+      # Step 8: Upload APK
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
         with:
-          name: package
-          path: ${{ steps.buildozer.outputs.filename }}
+          name: flappybird-apk
+          path: bin/*.apk
