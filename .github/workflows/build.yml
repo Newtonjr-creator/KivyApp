@@ -35,17 +35,12 @@ jobs:
         unzip -o commandlinetools.zip -d /home/runner/android-sdk/cmdline-tools
         rm commandlinetools.zip
 
-    # Ensure sdkmanager and android tools are in place
-    - name: Ensure SDK Manager and Android Tools are Installed
+    # Ensure the sdkmanager path is correct and not moved
+    - name: Ensure SDK Manager Path is Correct
       run: |
-        # Create the necessary directories and move files
+        # Ensure the latest cmdline-tools folder structure
         mkdir -p /home/runner/android-sdk/cmdline-tools/latest
         mv /home/runner/android-sdk/cmdline-tools/cmdline-tools/* /home/runner/android-sdk/cmdline-tools/latest
-
-        # Ensure sdkmanager is in the expected path
-        SDKMANAGER_PATH="/home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin"
-        mkdir -p $SDKMANAGER_PATH
-        ln -sf /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager $SDKMANAGER_PATH/sdkmanager
 
     # Accept Android SDK Licenses
     - name: Accept SDK Licenses
@@ -91,7 +86,7 @@ jobs:
         pip3 install --upgrade pip
         pip3 install buildozer Cython
 
-    # Build APK with Buildozer (add specific environment variable to ensure SDK is used)
+    # Build APK with Buildozer
     - name: Build APK
       run: |
         export ANDROIDSDK=/home/runner/android-sdk
@@ -117,4 +112,3 @@ jobs:
             path: $GITHUB_WORKSPACE/bin/*.apk
         else
           echo "APK not found. Skipping upload."
-        fi
