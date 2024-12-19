@@ -12,34 +12,36 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Set up Java environment
-        run: sudo apt-get install openjdk-8-jdk -y
-
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openjdk-8-jdk wget unzip
+          
       - name: Set up Android SDK
         run: |
-          # Install SDK tools
-          sudo apt-get install wget unzip -y
-          wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip -O android-sdk.zip
-          unzip android-sdk.zip -d $HOME/Android
-          rm android-sdk.zip
+          # Download command line tools and unzip them into the SDK folder
+          mkdir -p $HOME/Android
+          cd $HOME/Android
+          wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip -O commandlinetools.zip
+          unzip commandlinetools.zip
+          rm commandlinetools.zip
           
-          # Add SDK to PATH
+          # Set ANDROID_SDK_ROOT and update PATH
           echo "export ANDROID_SDK_ROOT=$HOME/Android" >> ~/.bashrc
-          echo "export PATH=$ANDROID_SDK_ROOT/tools/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH" >> ~/.bashrc
+          echo "export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/build-tools/36.0.0:$PATH" >> ~/.bashrc
           source ~/.bashrc
 
       - name: Accept Android SDK licenses
         run: |
-          yes | sdkmanager --licenses
+          # Accept SDK licenses
+          yes | $HOME/Android/cmdline-tools/latest/bin/sdkmanager --licenses
 
       - name: Install necessary SDK components
         run: |
-          sdkmanager "platform-tools"
-          sdkmanager "build-tools;36.0.0-rc3"
-          sdkmanager "platforms;android-28"
-          sdkmanager "sources;android-28"
+          # Install required SDK packages
+          $HOME/Android/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;36.0.0" "platforms;android-28" "sources;android-28"
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
           python3 -m pip install --upgrade pip
           pip install cython
