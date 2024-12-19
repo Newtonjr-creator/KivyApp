@@ -30,18 +30,16 @@ jobs:
     # Download Android SDK Command Line Tools
     - name: Download Android SDK Command Line Tools
       run: |
-        mkdir -p /home/runner/android-sdk/cmdline-tools
+        mkdir -p /home/runner/android-sdk/tools/bin
         wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O commandlinetools.zip
-        unzip -o commandlinetools.zip -d /home/runner/android-sdk/cmdline-tools
+        unzip -o commandlinetools.zip -d /home/runner/android-sdk/tools/bin
         rm commandlinetools.zip
-        mkdir -p /home/runner/android-sdk/cmdline-tools/latest
-        mv /home/runner/android-sdk/cmdline-tools/cmdline-tools/* /home/runner/android-sdk/cmdline-tools/latest
 
-    # Set ANDROID_HOME Environment Variable to the Correct SDK Path
+    # Set ANDROID_HOME Environment Variable
     - name: Set ANDROID_HOME Environment Variable
       run: |
-        echo "ANDROID_HOME=/home/runner/android-sdk/cmdline-tools/latest" >> $GITHUB_ENV
-        echo "PATH=$PATH:/home/runner/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
+        echo "ANDROID_HOME=/home/runner/android-sdk" >> $GITHUB_ENV
+        echo "PATH=$PATH:/home/runner/android-sdk/tools/bin" >> $GITHUB_ENV
 
     # Verify sdkmanager Path
     - name: Verify sdkmanager Path
