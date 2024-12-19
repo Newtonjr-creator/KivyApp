@@ -30,22 +30,22 @@ jobs:
     # Download Android SDK Command Line Tools
     - name: Download Android SDK Command Line Tools
       run: |
-        mkdir -p /home/runner/android-sdk
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O commandlinetools.zip
+        mkdir -p /home/runner/android-sdk/cmdline-tools
+        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O commandlinetools.zip
         unzip -o commandlinetools.zip -d /home/runner/android-sdk/cmdline-tools
         rm commandlinetools.zip
-
-    # Ensure the sdkmanager path is correct
-    - name: Ensure SDK Manager Path is Correct
-      run: |
-        # Create the correct folder structure
         mkdir -p /home/runner/android-sdk/cmdline-tools/latest
         mv /home/runner/android-sdk/cmdline-tools/cmdline-tools/* /home/runner/android-sdk/cmdline-tools/latest
 
-        # Create necessary symlink to make sdkmanager accessible for Buildozer
-        SDKMANAGER_PATH="/home/runner/.buildozer/android/platform/android-sdk/tools/bin"
-        mkdir -p $SDKMANAGER_PATH
-        ln -sf /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager $SDKMANAGER_PATH/sdkmanager
+    # Set SDK Manager Path
+    - name: Set SDK Manager Path
+      run: |
+        export PATH=/home/runner/android-sdk/cmdline-tools/latest/bin:$PATH
+
+    # Ensure sdkmanager is working
+    - name: Verify SDK Manager Installation
+      run: |
+        /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager --list
 
     # Accept Android SDK Licenses
     - name: Accept SDK Licenses
@@ -62,58 +62,21 @@ jobs:
           "extras;android;m2repository" \
           "extras;google;m2repository"
 
-    # Install AIDL if not found
-    - name: Verify and Install AIDL
-      run: |
-        AIDL_PATH="/home/runner/android-sdk/build-tools/33.0.2/aidl"
-        if [ ! -f "$AIDL_PATH" ]; then
-          echo "AIDL is not installed. Attempting independent installation..."
-          /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2"
-          if [ -f "$AIDL_PATH" ]; then
-            echo "AIDL successfully installed."
-          else
-            echo "AIDL installation failed. Exiting..."
-            exit 1
-          fi
-        else
-          echo "AIDL found at $AIDL_PATH"
-        fi
-
-    # Ensure Build Tools Path is correctly linked
-    - name: Ensure Build Tools Path
-      run: |
-        mkdir -p /home/runner/.buildozer/android/platform/android-sdk
-        ln -sf /home/runner/android-sdk/build-tools /home/runner/.buildozer/android/platform/android-sdk/
-
     # Install Python dependencies (e.g., buildozer and cython)
     - name: Install Python Dependencies
       run: |
         pip3 install --upgrade pip
         pip3 install buildozer Cython
 
-    # Build APK with Buildozer
+    # Build APK
     - name: Build APK
       run: |
-        export ANDROIDSDK=/home/runner/android-sdk
-        export ANDROIDNDK=/home/runner/android-sdk/ndk-bundle
         cd $GITHUB_WORKSPACE
         buildozer android debug
 
-    # Check if the APK was generated and upload it
-    - name: Check if APK was generated
-      run: |
-        if [ -f "$GITHUB_WORKSPACE/bin/*.apk" ]; then
-          echo "APK file found, proceeding to upload."
-        else
-          echo "APK file not found. Exiting..."
-          exit 1
-        fi
-
     # Upload APK for download
     - name: Upload APK
-      run: |
-        echo "Uploading APK..."
-        mv $GITHUB_WORKSPACE/bin/*.apk $GITHUB_WORKSPACE/apk/
-        actions/upload-artifact@v3:
-          name: FlappyBird-APK
-          path: $GITHUB_WORKSPACE/apk/*.apk
+      uses: actions/upload-artifact@v3
+      with:
+        name: FlappyBird-APK
+        path: $GITHUB_WORKSPACE/bin/*.apk
