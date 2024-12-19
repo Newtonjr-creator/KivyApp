@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04  # Ensure compatibility with the latest Ubuntu runner
+    runs-on: ubuntu-24.04
 
     steps:
       # Step 1: Checkout the repository
@@ -39,7 +39,7 @@ jobs:
           python3 -m pip install --upgrade pip setuptools wheel
           pip install buildozer cython
 
-      # Step 4: Download and set up Android SDK
+      # Step 4: Set up Android SDK
       - name: Set up Android SDK
         run: |
           mkdir -p $HOME/android-sdk/cmdline-tools
@@ -48,34 +48,33 @@ jobs:
           mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
           export ANDROID_HOME=$HOME/android-sdk
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" \
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "platform-tools" \
             "platforms;android-34" \
             "build-tools;34.0.0" \
-            "system-images;android-34;default;x86_64" \
-            "cmdline-tools;latest" || true
+            "build-tools;36.0.0-rc3"
 
-      # Step 5: Add environment variables for subsequent steps
-      - name: Add Android SDK to PATH
+      # Step 5: Add Android SDK environment variables
+      - name: Add environment variables
         run: |
           echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH" >> $GITHUB_ENV
+          echo "PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/build-tools/34.0.0:$PATH" >> $GITHUB_ENV
           source $GITHUB_ENV
 
-      # Step 6: Verify AIDL and Android SDK tools
-      - name: Verify AIDL and SDK setup
+      # Step 6: Check AIDL tool availability
+      - name: Verify AIDL
         run: |
           source $GITHUB_ENV
-          which aidl || echo "AIDL is not found in PATH"
-          sdkmanager --list
+          aidl --version || echo "AIDL not found. Please verify setup."
 
-      # Step 7: Run Buildozer to build the APK
+      # Step 7: Build the APK
       - name: Build with Buildozer
         run: |
           source $GITHUB_ENV
           buildozer android debug
 
-      # Step 8: Upload the APK
+      # Step 8: Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
