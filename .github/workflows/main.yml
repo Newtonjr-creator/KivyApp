@@ -52,22 +52,23 @@ jobs:
           export ANDROID_HOME=$HOME/android-sdk
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
 
-          # Clean up and remove any invalid or outdated packages
-          rm -rf $ANDROID_HOME/cmdline-tools/latest/.android
-          
           # Automatically accept licenses
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
           
-          # Install required Android SDK components
+          # Install the necessary SDK components, including AIDL and build tools
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" \
             "platforms;android-34" \
             "build-tools;34.0.0" \
-            "build-tools;36.0.0-rc3" \
+            "build-tools;36.0.0" \
             "android-ndk" \
+            "extra-android-m2repository" \
+            "build-tools;34.0.0" \
+            "build-tools;36.0.0-rc3" \
+            "tools" \
             || echo "Warning: Some packages may have failed to install, skipping..."
 
-      # Step 5: Set Environment Variables for Android SDK
+      # Step 5: Add Environment Variables for Android SDK
       - name: Add environment variables
         run: |
           echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
@@ -81,15 +82,15 @@ jobs:
           source $GITHUB_ENV
           echo "Checking AIDL version..."
           # Check if AIDL is available and verify its version
-          aidl --version || echo "AIDL not found. Please ensure it is installed."
-          # Check if AIDL is in the correct directory and executable
-          if ! which aidl; then
-            echo "AIDL command not found. Please check the SDK installation."
+          if command -v aidl; then
+            aidl --version
+          else
+            echo "AIDL command not found. Please ensure it is installed."
             exit 1
           fi
           echo "AIDL is installed and available."
 
-      # Step 7: Build with Buildozer
+      # Step 7: Build APK with Buildozer
       - name: Build APK with Buildozer
         run: |
           source $GITHUB_ENV
