@@ -66,57 +66,52 @@ jobs:
         /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager --update
         /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147" "extras;android;m2repository"
 
-    # Step 5: Set up Buildozer configurations
-    - name: Configure Buildozer
-      run: |
-        cp $GITHUB_WORKSPACE/buildozer.spec $GITHUB_WORKSPACE/buildozer.spec
-
-    # Step 6: Verify buildozer.spec file exists
+    # Step 5: Verify buildozer.spec file exists
     - name: Verify buildozer.spec file
       run: |
         ls -la $GITHUB_WORKSPACE/
 
-    # Step 7: Install Android dependencies
+    # Step 6: Install Android dependencies
     - name: Install Android dependencies
       run: |
         sudo apt-get install -y openjdk-8-jdk
 
-    # Step 8: Run Buildozer to Build APK
+    # Step 7: Run Buildozer to Build APK
     - name: Build APK using Buildozer
       run: |
         cd $GITHUB_WORKSPACE
         buildozer android debug
 
-    # Step 9: Verify APK generation
+    # Step 8: Verify APK generation
     - name: Verify APK Generation
       run: |
         ls -la $GITHUB_WORKSPACE/bin/
 
-    # Step 10: Archive APK as artifact
+    # Step 9: Archive APK as artifact
     - name: Archive APK
       uses: actions/upload-artifact@v3
       with:
         name: flappybird-apk
         path: $GITHUB_WORKSPACE/bin/*.apk
 
-    # Step 11: Clean up environment (optional)
+    # Step 10: Clean up environment (optional)
     - name: Clean up Android SDK
       run: |
         sudo rm -rf /usr/local/android-sdk
 
-    # Step 12: Clean Buildozer Cache (optional)
+    # Step 11: Clean Buildozer Cache (optional)
     - name: Clean Buildozer cache
       run: |
         buildozer android clean
 
-    # Step 13: Upload Build Logs (optional)
+    # Step 12: Upload Build Logs (optional)
     - name: Upload Build Logs
       uses: actions/upload-artifact@v3
       with:
         name: build-logs
         path: buildozer-*.log
 
-    # Step 14: Notify on Build Completion (optional)
+    # Step 13: Notify on Build Completion (optional)
     - name: Notify on Build Completion
       run: |
         echo "Build completed successfully"
