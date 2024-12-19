@@ -49,11 +49,10 @@ jobs:
           export ANDROID_HOME=$HOME/android-sdk
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" \
             "platforms;android-34" \
             "build-tools;34.0.0" \
-            "cmdline-tools;latest" \
             "build-tools;36.0.0-rc3" || true
 
       # Step 5: Add environment variables for subsequent steps
@@ -63,20 +62,26 @@ jobs:
           echo "PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH" >> $GITHUB_ENV
           source $GITHUB_ENV
 
-      # Step 6: Verify AIDL and SDK tools
+      # Step 6: Retry license acceptance if failed
+      - name: Retry License Acceptance
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;36.0.0-rc3"
+
+      # Step 7: Verify AIDL and SDK tools
       - name: Verify AIDL and SDK setup
         run: |
           source $GITHUB_ENV
           which aidl || echo "AIDL is not found in PATH"
           sdkmanager --list
 
-      # Step 7: Run Buildozer to build the APK
+      # Step 8: Run Buildozer to build the APK
       - name: Build with Buildozer
         run: |
           source $GITHUB_ENV
           buildozer android debug
 
-      # Step 8: Upload the APK
+      # Step 9: Upload the APK
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
