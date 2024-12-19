@@ -106,7 +106,7 @@ android.permissions = (name=android.permission.WRITE_EXTERNAL_STORAGE;maxSdkVers
 #android.minapi = 21
 
 # (int) Android SDK version to use
-#android.sdk = 31
+android.sdk = 33
 # Set the correct Android SDK Build Tools version
 android.sdk_build_tools = 33.0.2
 
@@ -123,8 +123,7 @@ android.sdk_build_tools = 33.0.2
 #android.ndk_path =
 
 # (str) Android SDK directory (if empty, it will be automatically downloaded.)
-android.sdk_path = /home/runner/android-sdk/
-cmdline-tools/latest
+android.sdk_path = /home/runner/android-sdk
 # (str) ANT directory (if empty, it will be automatically downloaded.)
 #android.ant_path =
 
