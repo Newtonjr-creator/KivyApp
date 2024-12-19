@@ -102,13 +102,8 @@ jobs:
 
     # Upload APK for download
     - name: Upload APK
-      if: ${{ always() }}
-      run: |
-        if [ -f "$GITHUB_WORKSPACE/bin/*.apk" ]; then
-          echo "APK found, uploading..."
-          uses: actions/upload-artifact@v3
-          with:
-            name: FlappyBird-APK
-            path: $GITHUB_WORKSPACE/bin/*.apk
-        else
-          echo "APK not found. Skipping upload."
+      if: success() && (exists('$GITHUB_WORKSPACE/bin/*.apk'))
+      uses: actions/upload-artifact@v3
+      with:
+        name: FlappyBird-APK
+        path: $GITHUB_WORKSPACE/bin/*.apk
