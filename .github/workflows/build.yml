@@ -53,7 +53,7 @@ jobs:
           buildozer android debug
           
       - name: Upload APK
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: flappybird-apk
           path: /storage/emulated/0/flappybird/bin/*.apk
