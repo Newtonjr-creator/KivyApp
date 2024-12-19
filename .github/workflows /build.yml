@@ -52,22 +52,20 @@ jobs:
           export ANDROID_HOME=$HOME/android-sdk
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
 
-          # Clean up and remove any invalid or outdated packages
-          rm -rf $ANDROID_HOME/cmdline-tools/latest/.android
-          
           # Automatically accept licenses
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
           
-          # Install the necessary SDK components for AIDL and other tools
+          # Install necessary SDK components, including AIDL and build tools
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" \
             "platforms;android-34" \
             "build-tools;34.0.0" \
-            "build-tools;36.0.0" \
             "android-ndk" \
             "extra-android-m2repository" \
-            "build-tools;34.0.0" \
+            "tools" \
             "build-tools;36.0.0-rc3" \
+            "tools" \
+            "platforms;android-34" \
             || echo "Warning: Some packages may have failed to install, skipping..."
 
       # Step 5: Add Environment Variables for Android SDK
