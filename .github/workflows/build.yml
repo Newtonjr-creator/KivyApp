@@ -109,9 +109,9 @@ jobs:
           cd /storage/emulated/0/flappybird
           buildozer android debug
 
-      # Upload APK as artifact
+      # Upload APK as artifact (Updated to v3)
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: flappybird-apk
           path: /storage/emulated/0/flappybird/bin/*.apk
