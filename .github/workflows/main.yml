@@ -39,7 +39,7 @@ jobs:
           python3 -m pip install --upgrade pip setuptools wheel
           pip install buildozer cython
 
-      # Step 4: Download and set up Android SDK
+      # Step 4: Set up Android SDK
       - name: Set up Android SDK
         run: |
           mkdir -p $HOME/android-sdk/cmdline-tools
@@ -53,35 +53,30 @@ jobs:
             "platform-tools" \
             "platforms;android-34" \
             "build-tools;34.0.0" \
-            "build-tools;36.0.0-rc3" || true
+            "build-tools;36.0.0-rc3"
 
-      # Step 5: Add environment variables for subsequent steps
-      - name: Add Android SDK to PATH
+      # Step 5: Set Environment Variables for Android SDK
+      - name: Add environment variables
         run: |
           echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH" >> $GITHUB_ENV
+          echo "PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/build-tools/34.0.0:$PATH" >> $GITHUB_ENV
+          echo "PATH=$ANDROID_HOME/build-tools/36.0.0-rc3:$PATH" >> $GITHUB_ENV
           source $GITHUB_ENV
 
-      # Step 6: Retry license acceptance if failed
-      - name: Retry License Acceptance
-        run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;36.0.0-rc3"
-
-      # Step 7: Verify AIDL and SDK tools
-      - name: Verify AIDL and SDK setup
+      # Step 6: Verify AIDL Availability
+      - name: Verify AIDL
         run: |
           source $GITHUB_ENV
-          which aidl || echo "AIDL is not found in PATH"
-          sdkmanager --list
+          which aidl || echo "AIDL not found, setup failed."
+          $ANDROID_HOME/build-tools/34.0.0/aidl --version || echo "AIDL version check failed."
 
-      # Step 8: Run Buildozer to build the APK
+      # Step 7: Build the APK
       - name: Build with Buildozer
         run: |
           source $GITHUB_ENV
           buildozer android debug
 
-      # Step 9: Upload the APK
+      # Step 8: Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
