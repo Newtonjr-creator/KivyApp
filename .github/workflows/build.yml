@@ -1,0 +1,73 @@
+name: CI
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # used to cache dependencies with a timeout
+      - name: Get Date
+        id: get-date
+        run: |
+          echo "::set-output name=date::$(/bin/date -u "+%Y%m%d")"
+        shell: bash
+
+      - name: Cache Buildozer global directory
+        uses: actions/cache@v2
+        with:
+          path: .buildozer_global
+          key: buildozer-global-${{ hashFiles('buildozer.spec') }}
+
+      - uses: actions/cache@v2
+        with:
+          path: .buildozer
+          key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
+
+      - name: Install Android SDK and Build Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip
+
+          # Set environment variables for SDK
+          echo "ANDROID_HOME=/usr/local/android-sdk" >> $GITHUB_ENV
+          echo "PATH=$PATH:/usr/local/android-sdk/tools:/usr/local/android-sdk/platform-tools:/usr/local/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
+
+          # Download and unzip Android SDK Command-line Tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -P /tmp
+          unzip /tmp/commandlinetools-linux-8512546_latest.zip -d /usr/local/android-sdk/cmdline-tools
+          rm /tmp/commandlinetools-linux-8512546_latest.zip
+
+          # Accept all SDK licenses
+          yes | /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+
+          # Install necessary SDK components (including NDK and platform tools)
+          /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager --update
+          /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147" "extras;android;m2repository"
+
+      - name: Verify AIDL availability
+        run: |
+          if ! command -v aidl &> /dev/null
+          then
+            echo "AIDL not found, please ensure it is installed."
+            exit 1
+          fi
+          echo "AIDL is installed and available."
+
+      - name: Build with Buildozer
+        run: |
+          # Change to your app directory
+          cd /storage/emulated/0/flappybird
+
+          # Run Buildozer command with your buildozer.spec
+          buildozer android debug
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: package
+          path: /storage/emulated/0/flappybird/bin
