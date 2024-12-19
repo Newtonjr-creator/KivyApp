@@ -54,7 +54,7 @@ jobs:
     # Build APK
     - name: Build APK
       run: |
-        cd /home/runner/work/your-repo-name/your-repo-name
+        cd $GITHUB_WORKSPACE
         buildozer android debug
 
     # Archive APK for download
@@ -62,4 +62,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: FlappyBird-APK
-        path: /home/runner/work/your-repo-name/your-repo-name/bin/*.apk
+        path: $GITHUB_WORKSPACE/bin/*.apk
