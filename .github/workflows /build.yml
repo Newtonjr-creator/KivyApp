@@ -27,7 +27,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y wget unzip python3 python3-pip
 
-    # Download Android Command Line Tools
+    # Download Android SDK Command Line Tools
     - name: Download Android SDK Command Line Tools
       run: |
         mkdir -p /home/runner/android-sdk
@@ -35,6 +35,19 @@ jobs:
         unzip -o commandlinetools.zip -d /home/runner/android-sdk/cmdline-tools
         mkdir -p /home/runner/android-sdk/cmdline-tools/latest
         mv /home/runner/android-sdk/cmdline-tools/cmdline-tools/* /home/runner/android-sdk/cmdline-tools/latest
+
+    # Install sdkmanager into the required path
+    - name: Install sdkmanager into expected path
+      run: |
+        SDKMANAGER_PATH="/home/runner/.buildozer/android/platform/android-sdk/tools/bin"
+        if [ ! -f "$SDKMANAGER_PATH/sdkmanager" ]; then
+          echo "sdkmanager not found. Installing sdkmanager into the expected directory..."
+          mkdir -p $SDKMANAGER_PATH
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O sdkmanager.zip
+          unzip -o sdkmanager.zip -d /home/runner/android-sdk/cmdline-tools/bin/
+          mv /home/runner/android-sdk/cmdline-tools/bin/sdkmanager $SDKMANAGER_PATH/
+          rm sdkmanager.zip
+        fi
 
     # Accept Android SDK Licenses
     - name: Accept SDK Licenses
@@ -51,7 +64,7 @@ jobs:
           "extras;android;m2repository" \
           "extras;google;m2repository"
 
-    # Verify or Install AIDL Independently
+    # Install AIDL if not found
     - name: Verify and Install AIDL
       run: |
         AIDL_PATH="/home/runner/android-sdk/build-tools/33.0.2/aidl"
@@ -68,8 +81,8 @@ jobs:
           echo "AIDL found at $AIDL_PATH"
         fi
 
-    # Link Build Tools Path (if necessary)
-    - name: Link Build Tools Path
+    # Ensure Build Tools Path is correctly linked
+    - name: Ensure Build Tools Path
       run: |
         mkdir -p /home/runner/.buildozer/android/platform/android-sdk
         ln -sf /home/runner/android-sdk/build-tools /home/runner/.buildozer/android/platform/android-sdk/
