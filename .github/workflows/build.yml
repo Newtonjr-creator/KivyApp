@@ -43,22 +43,25 @@ jobs:
             libxml2-dev \
             libxslt1-dev
 
-      # Install and setup Android SDK
-      - name: Install Android SDK tools
-        run: |
-          # Define SDK location
-          export ANDROID_SDK_ROOT=$HOME/android-sdk
+   # Install and setup Android SDK  
+  - name: Install Android SDK tools
+   run: |
+    # Define SDK location
+    export ANDROID_SDK_ROOT=$HOME/android-sdk
 
-          # Download and install SDK command-line tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip -O $HOME/commandlinetools.zip
-          unzip -q $HOME/commandlinetools.zip -d $ANDROID_SDK_ROOT
-          rm $HOME/commandlinetools.zip
+    # Download and install SDK command-line tools
+    wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip -O $HOME/commandlinetools.zip
+    unzip -q $HOME/commandlinetools.zip -d $ANDROID_SDK_ROOT
+    rm $HOME/commandlinetools.zip
 
-          # Ensure cmdline-tools is correctly linked
-          mv $ANDROID_SDK_ROOT/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
+    # Rename cmdline-tools folder to latest
+    if [ -d "$ANDROID_SDK_ROOT/cmdline-tools" ]; then
+      mv $ANDROID_SDK_ROOT/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools-old
+    fi
+    mv $ANDROID_SDK_ROOT/cmdline-tools-old $ANDROID_SDK_ROOT/cmdline-tools/latest
 
-          # Update SDK manager
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --update
+    # Update SDK manager
+    yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --update
 
       # Accept SDK licenses
       - name: Accept SDK licenses
