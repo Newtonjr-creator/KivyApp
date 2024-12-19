@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04  # Preemptively switch to Ubuntu 24.04
+    runs-on: ubuntu-24.04  # Ensure compatibility with the latest Ubuntu runner
 
     steps:
       # Step 1: Checkout the repository
@@ -62,13 +62,20 @@ jobs:
           echo "PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH" >> $GITHUB_ENV
           source $GITHUB_ENV
 
-      # Step 6: Run Buildozer to build the APK
+      # Step 6: Verify AIDL and Android SDK tools
+      - name: Verify AIDL and SDK setup
+        run: |
+          source $GITHUB_ENV
+          which aidl || echo "AIDL is not found in PATH"
+          sdkmanager --list
+
+      # Step 7: Run Buildozer to build the APK
       - name: Build with Buildozer
         run: |
           source $GITHUB_ENV
           buildozer android debug
 
-      # Step 7: Upload the APK
+      # Step 8: Upload the APK
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
