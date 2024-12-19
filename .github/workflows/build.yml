@@ -19,31 +19,28 @@ jobs:
 
       - name: Set up Android SDK
         run: |
-          # Create the Android SDK directory
-          mkdir -p $HOME/Android/cmdline-tools
+          # Create Android SDK directory and latest directory
+          mkdir -p $HOME/Android/cmdline-tools/latest
 
-          # Download the latest command line tools from Android
+          # Download and extract Android command line tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip -O commandlinetools.zip
           unzip commandlinetools.zip -d $HOME/Android/cmdline-tools
           rm commandlinetools.zip
 
-          # Move extracted tools to the 'latest' folder (correct path)
-          if [ -d "$HOME/Android/cmdline-tools/cmdline-tools" ]; then
-            mv $HOME/Android/cmdline-tools/cmdline-tools/* $HOME/Android/cmdline-tools/latest/
-            echo "Moved cmdline-tools to latest"
-          fi
+          # Move extracted tools to 'latest' directory
+          mv $HOME/Android/cmdline-tools/cmdline-tools/* $HOME/Android/cmdline-tools/latest/
 
-          # Check the folder structure and confirm sdkmanager is available
+          # Verify the folder structure
           ls -R $HOME/Android/cmdline-tools
 
-          # Set environment variables for the Android SDK
+          # Set environment variables for Android SDK
           echo "export ANDROID_SDK_ROOT=$HOME/Android" >> ~/.bashrc
           echo "export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/build-tools/36.0.0:$PATH" >> ~/.bashrc
           source ~/.bashrc
 
       - name: Verify sdkmanager location
         run: |
-          # Check if sdkmanager is found
+          # Verify that sdkmanager exists in the expected location
           ls $HOME/Android/cmdline-tools/latest/bin/sdkmanager || echo "sdkmanager not found"
 
       - name: Accept Android SDK licenses
@@ -65,7 +62,7 @@ jobs:
 
       - name: Build APK with Buildozer
         run: |
-          # Set the correct paths and permissions for Buildozer
+          # Navigate to the project directory and build APK with Buildozer
           cd /storage/emulated/0/flappybird
           buildozer android debug
 
