@@ -90,14 +90,23 @@ jobs:
         pip3 install --upgrade pip
         pip3 install buildozer Cython
 
-    # Build APK
+    # Build APK with Buildozer (add specific environment variable to ensure SDK is used)
     - name: Build APK
       run: |
+        export ANDROIDSDK=/home/runner/android-sdk
+        export ANDROIDNDK=/home/runner/android-sdk/ndk-bundle
         cd $GITHUB_WORKSPACE
         buildozer android debug
 
-    # Archive APK for download
+    # Check if the APK was generated
+    - name: Check if APK was generated
+      run: |
+        echo "Checking if APK exists..."
+        ls -lh $GITHUB_WORKSPACE/bin/*.apk
+
+    # Upload APK for download
     - name: Upload APK
+      if: success() && (exists('$GITHUB_WORKSPACE/bin/*.apk'))
       uses: actions/upload-artifact@v3
       with:
         name: FlappyBird-APK
