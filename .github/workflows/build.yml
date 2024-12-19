@@ -37,8 +37,9 @@ jobs:
           echo "ANDROID_HOME=/usr/local/android-sdk" >> $GITHUB_ENV
           echo "PATH=$PATH:/usr/local/android-sdk/tools:/usr/local/android-sdk/platform-tools:/usr/local/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
 
-          # Create the necessary directories if they do not exist
+          # Create the necessary directories if they do not exist and grant write permissions
           sudo mkdir -p /usr/local/android-sdk/cmdline-tools
+          sudo chmod -R 777 /usr/local/android-sdk  # Grant write permissions to the SDK directory
 
           # Download and unzip Android SDK Command-line Tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -P /tmp
