@@ -1,10 +1,10 @@
 [app]
 
 # (str) Title of your application
- title = KivyApp 
+title = flappy
 
 # (str) Package name
- package.name = flappy
+package.name = flappy
 
 # (str) Package domain (needed for android/ios packaging)
 package.domain = com.abhishek.app
@@ -32,8 +32,8 @@ source.include_exts = py,png,jpg,kv,atlas,wav
 __version__  = 1.0.0
 
 # (str) Application versioning (method 2)
- version.regex = __version__ = ['"](.*)['"]
- version.filename = %(source.dir)s/main.py
+ #version.regex = __version__ = ['"](.*)['"]
+ #version.filename = %(source.dir)s/main.py
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
