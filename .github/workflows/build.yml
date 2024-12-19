@@ -1,117 +1,50 @@
-name: Build and Package APK
+name: Build Kivy App
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
     branches:
       - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: production
 
     steps:
-    # Step 1: Checkout repository
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    # Step 2: Set up Python environment and install dependencies
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.8"
 
-    - name: Upgrade pip
-      run: |
-        python -m pip install --upgrade pip
+      - name: Install Buildozer and Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install buildozer cython
 
-    # Step 3: Install Buildozer and other dependencies
-    - name: Install Buildozer and dependencies
-      run: |
-        python -m pip install buildozer
-        python -m pip install Cython
+      - name: Set up Android SDK
+        run: |
+          mkdir -p $ANDROID_HOME/cmdline-tools/latest
+          curl -o sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          unzip -o sdk-tools.zip -d $ANDROID_HOME/cmdline-tools/latest
+          rm sdk-tools.zip
 
-    # Step 4: Install Android SDK and Build Tools
-    - name: Install Android SDK and Build Tools
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y wget unzip
+      - name: Accept Android SDK Licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
 
-        # Set environment variables for SDK
-        echo "ANDROID_HOME=/usr/local/android-sdk" >> $GITHUB_ENV
-        echo "PATH=$PATH:/usr/local/android-sdk/tools:/usr/local/android-sdk/platform-tools:/usr/local/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
+      - name: Install Android Build Tools
+        run: |
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "build-tools;31.0.0" "platform-tools" "platforms;android-31"
 
-        # Create the necessary directories if they do not exist and grant write permissions
-        sudo mkdir -p /usr/local/android-sdk/cmdline-tools
-        sudo chmod -R 777 /usr/local/android-sdk  # Grant write permissions to the SDK directory
+      - name: Verify AIDL Tool
+        run: |
+          if [ ! -f "$ANDROID_HOME/build-tools/31.0.0/aidl" ]; then
+            echo "AIDL not found. Please check Build-Tools installation."
+            exit 1
+          fi
 
-        # Download and unzip Android SDK Command-line Tools
-        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -P /tmp
-        unzip /tmp/commandlinetools-linux-8512546_latest.zip -d /usr/local/android-sdk/cmdline-tools
-        rm /tmp/commandlinetools-linux-8512546_latest.zip
-
-        # Create a symlink to 'latest' so that sdkmanager can be found
-        sudo ln -s /usr/local/android-sdk/cmdline-tools/cmdline-tools /usr/local/android-sdk/cmdline-tools/latest
-
-        # Ensure sdkmanager exists in the specified location
-        ls -la /usr/local/android-sdk/cmdline-tools/latest/bin/
-
-        # Accept all SDK licenses
-        yes | /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
-
-        # Install necessary SDK components (including NDK and platform tools)
-        /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager --update
-        /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147" "extras;android;m2repository"
-
-    # Step 5: Verify buildozer.spec file exists
-    - name: Verify buildozer.spec file
-      run: |
-        ls -la $GITHUB_WORKSPACE/
-
-    # Step 6: Install Android dependencies
-    - name: Install Android dependencies
-      run: |
-        sudo apt-get install -y openjdk-8-jdk
-
-    # Step 7: Run Buildozer to Build APK
-    - name: Build APK using Buildozer
-      run: |
-        cd $GITHUB_WORKSPACE
-        buildozer android debug
-
-    # Step 8: Verify APK generation
-    - name: Verify APK Generation
-      run: |
-        ls -la $GITHUB_WORKSPACE/bin/
-
-    # Step 9: Archive APK as artifact
-    - name: Archive APK
-      uses: actions/upload-artifact@v3
-      with:
-        name: flappybird-apk
-        path: $GITHUB_WORKSPACE/bin/*.apk
-
-    # Step 10: Clean up environment (optional)
-    - name: Clean up Android SDK
-      run: |
-        sudo rm -rf /usr/local/android-sdk
-
-    # Step 11: Clean Buildozer Cache (optional)
-    - name: Clean Buildozer cache
-      run: |
-        buildozer android clean
-
-    # Step 12: Upload Build Logs (optional)
-    - name: Upload Build Logs
-      uses: actions/upload-artifact@v3
-      with:
-        name: build-logs
-        path: buildozer-*.log
-
-    # Step 13: Notify on Build Completion (optional)
-    - name: Notify on Build Completion
-      run: |
-        echo "Build completed successfully"
+      - name: Build the APK
+        run: |
+          cd $GITHUB_WORKSPACE
+          buildozer android debug
