@@ -43,17 +43,26 @@ jobs:
           # Check if the unzip worked and the directory structure is correct
           ls -alh $SDK_DIR/cmdline-tools
 
-          # Rename the cmdline-tools folder to 'latest'
-          echo "Renaming cmdline-tools folder..."
-          mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools-latest
+          # Ensure the 'latest' directory exists
+          echo "Ensuring 'latest' directory exists..."
+
+          # Create the 'latest' folder if it doesn't exist
+          if [ ! -d "$SDK_DIR/cmdline-tools/latest" ]; then
+            echo "'latest' directory does not exist. Creating it..."
+            mkdir -p $SDK_DIR/cmdline-tools/latest
+          fi
+
+          # Move extracted files to the 'latest' directory if needed
+          echo "Moving extracted cmdline-tools to the 'latest' directory..."
+          mv $SDK_DIR/cmdline-tools/* $SDK_DIR/cmdline-tools/latest/
 
           # Accept licenses
           echo "Accepting SDK licenses..."
-          yes | $SDK_DIR/cmdline-tools-latest/bin/sdkmanager --licenses
+          yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --licenses
 
           # Install platform tools and build tools
           echo "Installing SDK components..."
-          $SDK_DIR/cmdline-tools-latest/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3"
+          $SDK_DIR/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3"
 
       # Build the APK (customize this step as per your project requirements)
       - name: Build APK
