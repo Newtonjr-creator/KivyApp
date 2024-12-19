@@ -10,7 +10,7 @@ package.name = flappybird
 package.domain = com.abhishek.app
 
 # (str) Source code where the main.py live
-source.dir =  /storage/emulated/0/flappybird
+source.dir = .
 
 # (list) Source files to include (let empty to include all the files)
 source.include_exts = py,png,jpg,kv,atlas,wav
@@ -29,7 +29,7 @@ source.include_exts = py,png,jpg,kv,atlas,wav
 #source.exclude_patterns = license,images/*/*.jpg
 
 # (str) Application versioning (method 1)
-version = 0.1
+version = 1.0.0
 
 # (str) Application versioning (method 2)
 # version.regex = __version__ = ['"](.*)['"]
