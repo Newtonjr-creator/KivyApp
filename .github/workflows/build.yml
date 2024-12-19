@@ -16,20 +16,41 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y openjdk-8-jdk wget unzip
-          
+
       - name: Set up Android SDK
         run: |
-          # Download command line tools and unzip them into the SDK folder
-          mkdir -p $HOME/Android
-          cd $HOME/Android
+          # Create the Android SDK directory
+          mkdir -p $HOME/Android/cmdline-tools
+
+          # Download the latest command line tools from Android
           wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip -O commandlinetools.zip
-          unzip commandlinetools.zip
+          unzip commandlinetools.zip -d $HOME/Android/cmdline-tools
           rm commandlinetools.zip
-          
-          # Set ANDROID_SDK_ROOT and update PATH
+
+          # Check the structure to confirm extraction
+          echo "Contents of Android SDK directory after extraction:"
+          ls -R $HOME/Android/cmdline-tools
+
+          # Move extracted tools to 'latest' folder if necessary
+          if [ -d "$HOME/Android/cmdline-tools/cmdline-tools" ]; then
+            mv $HOME/Android/cmdline-tools/cmdline-tools/* $HOME/Android/cmdline-tools/latest/
+            echo "Moved cmdline-tools to latest"
+          else
+            echo "cmdline-tools folder does not exist!"
+          fi
+
+          # Check if the sdkmanager exists
+          ls $HOME/Android/cmdline-tools/latest/bin/
+
+          # Set environment variables for the Android SDK
           echo "export ANDROID_SDK_ROOT=$HOME/Android" >> ~/.bashrc
           echo "export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/build-tools/36.0.0:$PATH" >> ~/.bashrc
           source ~/.bashrc
+
+      - name: Verify sdkmanager location
+        run: |
+          # Check if sdkmanager is found
+          ls $HOME/Android/cmdline-tools/latest/bin/sdkmanager || echo "sdkmanager not found"
 
       - name: Accept Android SDK licenses
         run: |
@@ -53,7 +74,7 @@ jobs:
           # Set the correct paths and permissions for Buildozer
           cd /storage/emulated/0/flappybird
           buildozer android debug
-          
+
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
