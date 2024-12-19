@@ -1,4 +1,3 @@
-
 name: Build and Package APK
 
 on:
@@ -102,7 +101,7 @@ jobs:
 
     # Step 11: Archive APK as artifact
     - name: Archive APK
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: flappybird-apk
         path: /storage/emulated/0/flappybird/bin/*.apk
@@ -119,7 +118,7 @@ jobs:
 
     # Step 14: Upload Build Logs (optional)
     - name: Upload Build Logs
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: build-logs
         path: buildozer-*.log
