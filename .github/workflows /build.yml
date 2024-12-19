@@ -11,6 +11,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
     # Step 1: Checkout repository
@@ -23,13 +24,17 @@ jobs:
       with:
         python-version: 3.8
 
-    # Install necessary Python dependencies directly
-    - name: Install Buildozer
+    - name: Upgrade pip
       run: |
         python -m pip install --upgrade pip
-        python -m pip install buildozer
 
-    # Step 3: Install Android SDK and Build Tools
+    # Step 3: Install Buildozer and other dependencies
+    - name: Install Buildozer and dependencies
+      run: |
+        python -m pip install buildozer
+        python -m pip install Cython
+
+    # Step 4: Install Android SDK and Build Tools
     - name: Install Android SDK and Build Tools
       run: |
         sudo apt-get update
@@ -61,10 +66,64 @@ jobs:
         /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager --update
         /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147" "extras;android;m2repository"
 
-    # Step 4: Build APK using Buildozer
-    - name: Build APK
+    # Step 5: Set up Buildozer configurations
+    - name: Configure Buildozer
       run: |
-        # Build the APK using Buildozer
+        cd /storage/emulated/0/flappybird
+        cp /storage/emulated/0/flappybird/buildozer.spec /home/runner/work/my-repo/buildozer.spec
+
+    # Step 6: Check if Buildozer Spec exists
+    - name: Verify buildozer.spec file
+      run: |
+        ls -la /home/runner/work/my-repo/
+
+    # Step 7: Install necessary Android dependencies for Buildozer
+    - name: Install Android dependencies
+      run: |
+        sudo apt-get install -y openjdk-8-jdk
+
+    # Step 8: Run Buildozer to Build APK
+    - name: Build APK using Buildozer
+      run: |
         cd /storage/emulated/0/flappybird
         buildozer android debug
+
+    # Step 9: Deploy APK to device (optional, only if needed)
+    - name: Deploy APK to device
+      run: |
+        cd /storage/emulated/0/flappybird
         buildozer android deploy run
+
+    # Step 10: Check APK generation (optional verification step)
+    - name: Verify APK Generation
+      run: |
+        ls -la /storage/emulated/0/flappybird/bin/
+
+    # Step 11: Archive APK as artifact
+    - name: Archive APK
+      uses: actions/upload-artifact@v2
+      with:
+        name: flappybird-apk
+        path: /storage/emulated/0/flappybird/bin/*.apk
+
+    # Step 12: Clean up environment (optional)
+    - name: Clean up Android SDK
+      run: |
+        sudo rm -rf /usr/local/android-sdk
+
+    # Step 13: Clean Buildozer Cache (optional)
+    - name: Clean Buildozer cache
+      run: |
+        buildozer android clean
+
+    # Step 14: Upload Build Logs (optional)
+    - name: Upload Build Logs
+      uses: actions/upload-artifact@v2
+      with:
+        name: build-logs
+        path: buildozer-*.log
+
+    # Step 15: Notify on Build Completion (optional, can be configured for Slack, Email, etc.)
+    - name: Notify on Build Completion
+      run: |
+        echo "Build completed successfully"
