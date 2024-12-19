@@ -38,85 +38,63 @@ jobs:
     - name: Install Android SDK and Build Tools
       run: |
         sudo apt-get update
-        sudo apt-get install -y wget unzip
+        sudo apt-get install -y wget unzip openjdk-8-jdk
 
         # Set environment variables for SDK
         echo "ANDROID_HOME=/usr/local/android-sdk" >> $GITHUB_ENV
         echo "PATH=$PATH:/usr/local/android-sdk/tools:/usr/local/android-sdk/platform-tools:/usr/local/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
 
-        # Create the necessary directories if they do not exist and grant write permissions
+        # Create necessary directories
         sudo mkdir -p /usr/local/android-sdk/cmdline-tools
-        sudo chmod -R 777 /usr/local/android-sdk  # Grant write permissions to the SDK directory
+        sudo chmod -R 777 /usr/local/android-sdk
 
-        # Download and unzip Android SDK Command-line Tools
+        # Download Android SDK Command-line Tools
         wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -P /tmp
         unzip /tmp/commandlinetools-linux-8512546_latest.zip -d /usr/local/android-sdk/cmdline-tools
         rm /tmp/commandlinetools-linux-8512546_latest.zip
 
-        # Create a symlink to 'latest' so that sdkmanager can be found
+        # Create symbolic link for 'latest'
         sudo ln -s /usr/local/android-sdk/cmdline-tools/cmdline-tools /usr/local/android-sdk/cmdline-tools/latest
 
-        # Ensure sdkmanager exists in the specified location
-        ls -la /usr/local/android-sdk/cmdline-tools/latest/bin/
-
-        # Accept all SDK licenses
+        # Accept licenses and install required components
         yes | /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
-
-        # Install necessary SDK components (including NDK and platform tools)
         /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager --update
         /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147" "extras;android;m2repository"
 
-    # Step 5: Set up Buildozer configurations
-    - name: Configure Buildozer
-      run: |
-        cp $GITHUB_WORKSPACE/buildozer.spec /home/runner/work/my-repo/buildozer.spec
+        # Accept all licenses explicitly
+        yes | /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
 
-    # Step 6: Verify buildozer.spec file exists
+    # Step 5: Verify buildozer.spec file exists
     - name: Verify buildozer.spec file
       run: |
         ls -la $GITHUB_WORKSPACE/
 
-    # Step 7: Install Android dependencies
-    - name: Install Android dependencies
-      run: |
-        sudo apt-get install -y openjdk-8-jdk
-
-    # Step 8: Run Buildozer to Build APK
+    # Step 6: Run Buildozer to Build APK
     - name: Build APK using Buildozer
       run: |
         cd $GITHUB_WORKSPACE
         buildozer android debug
 
-    # Step 9: Verify APK generation
+    # Step 7: Verify APK generation
     - name: Verify APK Generation
       run: |
         ls -la $GITHUB_WORKSPACE/bin/
 
-    # Step 10: Archive APK as artifact
+    # Step 8: Archive APK as artifact
     - name: Archive APK
       uses: actions/upload-artifact@v3
       with:
         name: flappybird-apk
         path: $GITHUB_WORKSPACE/bin/*.apk
 
-    # Step 11: Clean up environment (optional)
+    # Step 9: Clean up environment (optional)
     - name: Clean up Android SDK
       run: |
         sudo rm -rf /usr/local/android-sdk
 
-    # Step 12: Clean Buildozer Cache (optional)
-    - name: Clean Buildozer cache
-      run: |
-        buildozer android clean
-
-    # Step 13: Upload Build Logs (optional)
+    # Step 10: Upload Build Logs (optional)
     - name: Upload Build Logs
       uses: actions/upload-artifact@v3
       with:
         name: build-logs
         path: buildozer-*.log
-
-    # Step 14: Notify on Build Completion (optional)
-    - name: Notify on Build Completion
-      run: |
-        echo "Build completed successfully"
