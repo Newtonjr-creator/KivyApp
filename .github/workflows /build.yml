@@ -39,26 +39,32 @@ jobs:
           python3 -m pip install --upgrade pip setuptools wheel
           pip install buildozer cython
 
-      # Step 4: Set up Android SDK
+      # Step 4: Download and Set up Android SDK
       - name: Set up Android SDK
         run: |
           mkdir -p $HOME/android-sdk/cmdline-tools
           curl -o sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
           unzip -q sdk-tools.zip -d $HOME/android-sdk/cmdline-tools
           mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
-          echo "export ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH" >> $GITHUB_ENV
-          source $GITHUB_ENV
+          export ANDROID_HOME=$HOME/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34"
 
-      # Step 5: Run Buildozer to build the app
+      # Step 5: Add Android SDK to GITHUB_ENV
+      - name: Set environment variables
+        run: |
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH" >> $GITHUB_ENV
+          source $GITHUB_ENV
+
+      # Step 6: Run Buildozer to build the app
       - name: Build with Buildozer
         run: |
           source $GITHUB_ENV
           buildozer android debug
 
-      # Step 6: Upload the APK artifact
+      # Step 7: Upload the APK artifact
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
