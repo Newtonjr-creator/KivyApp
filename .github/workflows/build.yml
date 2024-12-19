@@ -36,14 +36,16 @@ jobs:
         mkdir -p /home/runner/android-sdk/cmdline-tools/latest
         mv /home/runner/android-sdk/cmdline-tools/cmdline-tools/* /home/runner/android-sdk/cmdline-tools/latest
 
-    # Install sdkmanager if it doesn't exist
-    - name: Install sdkmanager
+    # Install sdkmanager into the expected path
+    - name: Install sdkmanager into expected path
       run: |
-        if [ ! -f "/home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager" ]; then
-          echo "sdkmanager not found. Installing sdkmanager..."
-          mkdir -p /home/runner/android-sdk/cmdline-tools/bin
+        SDKMANAGER_PATH="/home/runner/.buildozer/android/platform/android-sdk/tools/bin"
+        if [ ! -f "$SDKMANAGER_PATH/sdkmanager" ]; then
+          echo "sdkmanager not found. Installing sdkmanager into the expected directory..."
+          mkdir -p $SDKMANAGER_PATH
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O sdkmanager.zip
           unzip -o sdkmanager.zip -d /home/runner/android-sdk/cmdline-tools/bin/
+          mv /home/runner/android-sdk/cmdline-tools/bin/sdkmanager $SDKMANAGER_PATH/
           rm sdkmanager.zip
         fi
 
