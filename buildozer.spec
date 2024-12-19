@@ -1,10 +1,10 @@
 [app]
 
 # (str) Title of your application
-title = flappy
+title = flappybird 
 
 # (str) Package name
-package.name = flappy
+package.name = flappybird 
 
 # (str) Package domain (needed for android/ios packaging)
 package.domain = com.abhishek.app
