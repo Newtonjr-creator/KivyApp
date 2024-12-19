@@ -1,4 +1,4 @@
-name: CI
+name: Android Build
 
 on:
   push:
@@ -7,106 +7,67 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Step 2: Install system dependencies
-      - name: Install system dependencies
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+
+      - name: Install Android SDK and Build Tools
         run: |
+          # Install required dependencies
           sudo apt-get update
-          sudo apt-get install -y \
-            git \
-            openjdk-17-jdk \
-            libssl-dev \
-            libffi-dev \
-            zlib1g-dev \
-            autoconf \
-            automake \
-            build-essential \
-            python3-dev \
-            libtool \
-            cmake \
-            unzip \
-            curl
+          sudo apt-get install -y wget unzip
 
-      # Step 3: Install Python dependencies
-      - name: Install Python dependencies
-        run: |
-          python3 -m pip install --upgrade pip setuptools wheel
-          pip install buildozer cython
+          # Set environment variables
+          echo "ANDROID_HOME=/usr/local/android-sdk" >> $GITHUB_ENV
+          echo "PATH=$PATH:/usr/local/android-sdk/tools:/usr/local/android-sdk/platform-tools:/usr/local/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
 
-      # Step 4: Set up Android SDK
-      - name: Set up Android SDK
-        run: |
-          # Create Android SDK directory and download command line tools
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          curl -o sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          unzip -q sdk-tools.zip -d $HOME/android-sdk/cmdline-tools
-          mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
-          
-          # Set environment variables for SDK
-          export ANDROID_HOME=$HOME/android-sdk
-          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+          # Download and unzip Android SDK Command-line Tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -P /tmp
+          unzip /tmp/commandlinetools-linux-8512546_latest.zip -d /usr/local/android-sdk/cmdline-tools
+          rm /tmp/commandlinetools-linux-8512546_latest.zip
 
-          # Automatically accept licenses
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
-          
-          # Install necessary SDK components, including AIDL and build tools
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
-            "platform-tools" \
-            "platforms;android-34" \
-            "build-tools;34.0.0" \
-            "android-ndk" \
-            "extra-android-m2repository" \
-            "tools" \
-            "build-tools;36.0.0" \
-            "tools" \
-            "platforms;android-34" \
-            "build-tools;36.0.0-rc3" \
-            "extras;google;m2repository" \
-            "extras;android;m2repository"
+          # Accept all SDK licenses
+          yes | /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
 
-      # Step 5: Add Environment Variables for Android SDK
-      - name: Add environment variables
-        run: |
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/build-tools/34.0.0:$PATH" >> $GITHUB_ENV
-          echo "PATH=$ANDROID_HOME/build-tools/36.0.0-rc3:$PATH" >> $GITHUB_ENV
-          source $GITHUB_ENV
+          # Install necessary SDK components
+          /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager --update
+          /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147" "extras;android;m2repository"
 
-      # Step 6: Check if AIDL is available
       - name: Verify AIDL availability
         run: |
-          source $GITHUB_ENV
-          echo "Checking AIDL version..."
-          # List SDK components to check if AIDL is available
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --list
-          # Check if AIDL is available and verify its version
-          if command -v aidl; then
-            aidl --version
-          else
-            echo "AIDL command not found. Please ensure it is installed."
-            # Check if build tools folder exists and contains AIDL
-            echo "Checking if AIDL is installed under build-tools directory..."
-            ls $ANDROID_HOME/build-tools
+          if ! command -v aidl &> /dev/null
+          then
+            echo "AIDL not found, please ensure it is installed."
             exit 1
           fi
           echo "AIDL is installed and available."
 
-      # Step 7: Build APK with Buildozer
-      - name: Build APK with Buildozer
+      - name: Verify NDK installation
         run: |
-          source $GITHUB_ENV
-          # Ensure Buildozer environment is set correctly and build the APK
-          buildozer android debug
+          if [ ! -d "$ANDROID_HOME/ndk/21.3.6528147" ]; then
+            echo "NDK installation failed."
+            exit 1
+          fi
+          echo "NDK is installed."
 
-      # Step 8: Upload APK as artifact
-      - name: Upload APK
-        uses: actions/upload-artifact@v3
-        with:
-          name: flappybird-apk
-          path: bin/*.apk
+      - name: Set the App Path
+        run: |
+          # Set the path to your app directory (adjust to your actual app path)
+          echo "APP_PATH=/storage/emulated/0/flappybird" >> $GITHUB_ENV
+          echo "App path set to: $APP_PATH"
+
+      - name: Install Buildozer
+        run: |
+          pip install buildozer
+
+      - name: Build app with Buildozer
+        run: |
+          cd $APP_PATH  # Change to your app directory
+          buildozer android debug
