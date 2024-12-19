@@ -1,4 +1,4 @@
-name: CI
+name: Android Build
 
 on:
   push:
@@ -31,7 +31,9 @@ jobs:
             libtool \
             cmake \
             unzip \
-            curl
+            curl \
+            wget \
+            python3-pip
 
       # Step 3: Install Python dependencies
       - name: Install Python dependencies
@@ -39,7 +41,7 @@ jobs:
           python3 -m pip install --upgrade pip setuptools wheel
           pip install buildozer cython
 
-      # Step 4: Set up Android SDK
+      # Step 4: Set up Android SDK and Build Tools
       - name: Set up Android SDK
         run: |
           # Create Android SDK directory and download command line tools
@@ -71,7 +73,7 @@ jobs:
             "extras;google;m2repository" \
             "extras;android;m2repository"
 
-      # Step 5: Add Environment Variables for Android SDK
+      # Step 5: Set environment variables for Android SDK
       - name: Add environment variables
         run: |
           echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
@@ -79,13 +81,11 @@ jobs:
           echo "PATH=$ANDROID_HOME/build-tools/36.0.0-rc3:$PATH" >> $GITHUB_ENV
           source $GITHUB_ENV
 
-      # Step 6: Check if AIDL is available
+      # Step 6: Verify AIDL availability
       - name: Verify AIDL availability
         run: |
           source $GITHUB_ENV
           echo "Checking AIDL version..."
-          # List SDK components to check if AIDL is available
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --list
           # Check if AIDL is available and verify its version
           if command -v aidl; then
             aidl --version
