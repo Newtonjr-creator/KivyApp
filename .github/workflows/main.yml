@@ -7,15 +7,15 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
 
     steps:
       # Step 1: Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Step 2: Install system dependencies
-      - name: Install required packages
+      # Step 2: Install required packages
+      - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -33,32 +33,38 @@ jobs:
             unzip \
             curl
 
-      # Step 3: Install Python and Buildozer dependencies
+      # Step 3: Install Python dependencies
       - name: Install Python dependencies
         run: |
           python3 -m pip install --upgrade pip setuptools wheel
           pip install buildozer cython
 
-      # Step 4: Set up Android SDK
+      # Step 4: Download and set up Android SDK
       - name: Set up Android SDK
         run: |
-          mkdir -p $HOME/android-sdk/cmdline-tools/latest
+          mkdir -p $HOME/android-sdk/cmdline-tools
           curl -o sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          unzip -q sdk-tools.zip -d $HOME/android-sdk/cmdline-tools/latest
-          rm sdk-tools.zip
-          echo "export ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "export PATH=$PATH:$HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools" >> $GITHUB_ENV
-          source $GITHUB_ENV
-          sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-34"
+          unzip -q sdk-tools.zip -d $HOME/android-sdk/cmdline-tools
+          mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+          export ANDROID_HOME=$HOME/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" || true
 
-      # Step 5: Run Buildozer to build the app
+      # Step 5: Add environment variables for subsequent steps
+      - name: Add Android SDK to PATH
+        run: |
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH" >> $GITHUB_ENV
+          source $GITHUB_ENV
+
+      # Step 6: Run Buildozer to build the APK
       - name: Build with Buildozer
         run: |
           source $GITHUB_ENV
           buildozer android debug
 
-      # Step 6: Upload the APK artifact
+      # Step 7: Upload the APK
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
