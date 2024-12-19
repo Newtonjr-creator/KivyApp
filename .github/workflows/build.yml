@@ -41,11 +41,23 @@ jobs:
       run: |
         yes | /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
 
-    # Install Build Tools, Platform Tools, and Extras
+    # Install Build Tools, Platform Tools, and Extras (including AIDL)
     - name: Install Android Build Tools and Dependencies
       run: |
         /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager \
-          "platform-tools" "build-tools;33.0.2" "platforms;android-33" "extras;android;m2repository" "extras;google;m2repository"
+          "platform-tools" \
+          "build-tools;33.0.2" \
+          "platforms;android-33" \
+          "extras;android;m2repository" \
+          "extras;google;m2repository"
+
+    # Verify AIDL installation
+    - name: Verify AIDL Installation
+      run: |
+        if [ ! -x "/home/runner/android-sdk/build-tools/33.0.2/aidl" ]; then
+          echo "AIDL is not found. Please check the installation."
+          exit 1
+        fi
 
     # Install Python dependencies (e.g., buildozer and cython)
     - name: Install Python Dependencies
