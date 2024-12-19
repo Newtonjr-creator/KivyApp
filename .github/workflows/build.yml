@@ -54,9 +54,12 @@ jobs:
     # Verify AIDL installation
     - name: Verify AIDL Installation
       run: |
-        if [ ! -x "/home/runner/android-sdk/build-tools/33.0.2/aidl" ]; then
-          echo "AIDL is not found. Please check the installation."
+        AIDL_PATH="/home/runner/android-sdk/build-tools/33.0.2/aidl"
+        if [ ! -f "$AIDL_PATH" ]; then
+          echo "AIDL is not installed. Please ensure 'build-tools' are correctly configured."
           exit 1
+        else
+          echo "AIDL found at $AIDL_PATH"
         fi
 
     # Install Python dependencies (e.g., buildozer and cython)
