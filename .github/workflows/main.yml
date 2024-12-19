@@ -7,14 +7,14 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       # Step 1: Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Step 2: Install required packages
+      # Step 2: Install system dependencies
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -48,8 +48,13 @@ jobs:
           mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
           export ANDROID_HOME=$HOME/android-sdk
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" || true
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "platform-tools" \
+            "platforms;android-34" \
+            "build-tools;34.0.0" \
+            "cmdline-tools;latest" \
+            "build-tools;36.0.0-rc3" || true
 
       # Step 5: Add environment variables for subsequent steps
       - name: Add Android SDK to PATH
@@ -58,13 +63,20 @@ jobs:
           echo "PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH" >> $GITHUB_ENV
           source $GITHUB_ENV
 
-      # Step 6: Run Buildozer to build the APK
+      # Step 6: Verify AIDL and SDK tools
+      - name: Verify AIDL and SDK setup
+        run: |
+          source $GITHUB_ENV
+          which aidl || echo "AIDL is not found in PATH"
+          sdkmanager --list
+
+      # Step 7: Run Buildozer to build the APK
       - name: Build with Buildozer
         run: |
           source $GITHUB_ENV
           buildozer android debug
 
-      # Step 7: Upload the APK
+      # Step 8: Upload the APK
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
