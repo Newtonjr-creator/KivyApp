@@ -35,11 +35,11 @@ jobs:
 
       - name: Install Android Build Tools
         run: |
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "build-tools;31.0.0" "platform-tools" "platforms;android-31"
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "build-tools;33.0.0" "platform-tools" "platforms;android-33"
 
       - name: Verify AIDL Tool
         run: |
-          if [ ! -f "$ANDROID_HOME/build-tools/31.0.0/aidl" ]; then
+          if [ ! -f "$ANDROID_HOME/build-tools/33.0.0/aidl" ]; then
             echo "AIDL not found. Please check Build-Tools installation."
             exit 1
           fi
