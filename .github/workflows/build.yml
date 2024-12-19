@@ -27,20 +27,14 @@ jobs:
           unzip commandlinetools.zip -d $HOME/Android/cmdline-tools
           rm commandlinetools.zip
 
-          # Check the structure to confirm extraction
-          echo "Contents of Android SDK directory after extraction:"
-          ls -R $HOME/Android/cmdline-tools
-
-          # Move extracted tools to 'latest' folder if necessary
+          # Move extracted tools to the 'latest' folder (correct path)
           if [ -d "$HOME/Android/cmdline-tools/cmdline-tools" ]; then
             mv $HOME/Android/cmdline-tools/cmdline-tools/* $HOME/Android/cmdline-tools/latest/
             echo "Moved cmdline-tools to latest"
-          else
-            echo "cmdline-tools folder does not exist!"
           fi
 
-          # Check if the sdkmanager exists
-          ls $HOME/Android/cmdline-tools/latest/bin/
+          # Check the folder structure and confirm sdkmanager is available
+          ls -R $HOME/Android/cmdline-tools
 
           # Set environment variables for the Android SDK
           echo "export ANDROID_SDK_ROOT=$HOME/Android" >> ~/.bashrc
