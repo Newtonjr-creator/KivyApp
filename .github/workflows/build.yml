@@ -8,50 +8,59 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
-      # Checkout the repository
-      - name: Checkout Repository
+      # Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Install dependencies and setup Android SDK
-      - name: Install Android SDK tools
+      # Cache Android SDK
+      - name: Cache Android SDK
+        uses: actions/cache@v3
+        with:
+          path: /home/runner/android-sdk
+          key: ${{ runner.os }}-android-sdk-${{ hashFiles('**/*.json') }}
+          restore-keys: |
+            ${{ runner.os }}-android-sdk-
+
+      # Install Android SDK Command-Line Tools
+      - name: Install Android SDK Command-Line Tools
         run: |
           # Define SDK location
-          export ANDROID_SDK_ROOT=$HOME/android-sdk
+          SDK_DIR=/home/runner/android-sdk
+          
+          # Download the command-line tools zip file
+          echo "Downloading Android SDK command-line tools..."
+          curl -s https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip -o commandlinetools.zip
+          
+          # Create the android-sdk folder if not present
+          mkdir -p $SDK_DIR
 
-          # Download and install SDK command-line tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip -O $HOME/commandlinetools.zip
-          unzip -q $HOME/commandlinetools.zip -d $ANDROID_SDK_ROOT
-          rm $HOME/commandlinetools.zip
+          # Unzip the SDK tools into the android-sdk directory
+          echo "Unzipping command-line tools..."
+          unzip -o commandlinetools.zip -d $SDK_DIR/cmdline-tools
 
-          # Rename cmdline-tools folder to latest
-          if [ -d "$ANDROID_SDK_ROOT/cmdline-tools" ]; then
-            mv $ANDROID_SDK_ROOT/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools-old
-          fi
-          mv $ANDROID_SDK_ROOT/cmdline-tools-old $ANDROID_SDK_ROOT/cmdline-tools/latest
+          # Check if the unzip worked and the directory structure is correct
+          ls -alh $SDK_DIR/cmdline-tools
 
-          # Update SDK manager
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --update
+          # Create the 'latest' folder if it doesn't exist
+          echo "Ensuring 'latest' directory exists..."
+          mkdir -p $SDK_DIR/cmdline-tools/latest
 
-      # Accept SDK licenses
-      - name: Accept SDK licenses
+          # Move the extracted cmdline-tools to the 'latest' folder
+          echo "Moving extracted cmdline-tools to the 'latest' directory..."
+          mv $SDK_DIR/cmdline-tools/* $SDK_DIR/cmdline-tools/latest/
+
+          # Accept licenses
+          echo "Accepting SDK licenses..."
+          yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --licenses
+
+          # Install platform tools and build tools
+          echo "Installing SDK components..."
+          $SDK_DIR/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3"
+
+      # Build the APK (customize this step as per your project requirements)
+      - name: Build APK
         run: |
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
-
-      # Install required SDK packages
-      - name: Install required SDK packages
-        run: |
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3" "platform-tools" "platforms;android-30"
-
-      # Build APK using Buildozer
-      - name: Build APK with Buildozer
-        run: |
-          # Install Buildozer if not already installed
-          pip install buildozer
-
-          # Navigate to project directory
-          cd /path/to/your/project
-
-          # Run Buildozer to build APK
-          buildozer android debug
+          # Add your build commands here (e.g., using gradle, ant, etc.)
+          echo "Building APK..."
