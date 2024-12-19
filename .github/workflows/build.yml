@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout code
+      # Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Cache Android SDK
+      # Cache the Android SDK
       - name: Cache Android SDK
         uses: actions/cache@v3
         with:
@@ -29,45 +29,50 @@ jobs:
           # Define SDK location
           SDK_DIR=/home/runner/android-sdk
           
-          # Download the command-line tools zip file
+          # Download command-line tools zip file
           echo "Downloading Android SDK command-line tools..."
           curl -s https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip -o commandlinetools.zip
           
-          # Create the android-sdk folder if not present
-          mkdir -p $SDK_DIR
+          # Create SDK directory if it doesn't exist
+          echo "Creating SDK directory..."
+          mkdir -p $SDK_DIR/cmdline-tools
 
-          # Unzip the SDK tools into a temporary folder
+          # Unzip the tools into the sdk directory
           echo "Unzipping command-line tools..."
-          unzip -o commandlinetools.zip -d $SDK_DIR/cmdline-tools-temp
-
-          # Check if the unzip worked and the directory structure is correct
-          ls -alh $SDK_DIR/cmdline-tools-temp
-
-          # Ensure the 'latest' directory exists
-          echo "Ensuring 'latest' directory exists..."
+          unzip -o commandlinetools.zip -d $SDK_DIR/cmdline-tools/
+          
+          # Ensure the 'latest' folder exists and move files into it
+          echo "Setting up 'latest' directory..."
           if [ ! -d "$SDK_DIR/cmdline-tools/latest" ]; then
             echo "'latest' directory does not exist. Creating it..."
             mkdir -p $SDK_DIR/cmdline-tools/latest
           fi
+          
+          # Move extracted files to 'latest' directory
+          echo "Moving extracted files into 'latest' directory..."
+          mv $SDK_DIR/cmdline-tools/cmdline-tools/* $SDK_DIR/cmdline-tools/latest/
 
-          # Move extracted files to the 'latest' directory
-          echo "Moving extracted cmdline-tools to the 'latest' directory..."
-          mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest/
+          # Clean up any remaining files
+          echo "Cleaning up..."
+          rm -rf $SDK_DIR/cmdline-tools/cmdline-tools
 
-          # Clean up the temporary folder
-          echo "Cleaning up temporary folder..."
-          rm -rf $SDK_DIR/cmdline-tools-temp
+          # Verify that sdkmanager exists in the right directory
+          echo "Verifying sdkmanager executable..."
+          if [ ! -f "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" ]; then
+            echo "sdkmanager not found!"
+            exit 1
+          fi
 
-          # Accept licenses
+          # Accept SDK licenses
           echo "Accepting SDK licenses..."
           yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --licenses
 
-          # Install platform tools and build tools
-          echo "Installing SDK components..."
+          # Install necessary SDK components
+          echo "Installing SDK components (platform-tools, build-tools, platforms)..."
           $SDK_DIR/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3"
 
-      # Build the APK (customize this step as per your project requirements)
+      # Build the APK (customize this step as per your project)
       - name: Build APK
         run: |
-          # Add your build commands here (e.g., using gradle, ant, etc.)
+          # Add your specific build commands here
           echo "Building APK..."
