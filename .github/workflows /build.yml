@@ -10,74 +10,85 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout code
-      - name: Checkout repository
-        uses: actions/checkout@v2
+    # Checkout the repository
+    - name: Checkout Repository
+      uses: actions/checkout@v3
 
-      # Cache Android SDK
-      - name: Cache Android SDK
-        uses: actions/cache@v3
-        with:
-          path: /home/runner/android-sdk
-          key: ${{ runner.os }}-android-sdk-${{ hashFiles('**/*.json') }}
-          restore-keys: |
-            ${{ runner.os }}-android-sdk-
+    # Set up Java environment
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'zulu'
+        java-version: '11'
 
-      # Install Android SDK Command-Line Tools
-      - name: Install Android SDK Command-Line Tools
-        run: |
-          # Define SDK location
-          SDK_DIR=/home/runner/android-sdk
-          
-          # Download the command-line tools zip file
-          echo "Downloading Android SDK command-line tools..."
-          curl -s https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip -o commandlinetools.zip
-          
-          # Create the android-sdk folder if not present
-          mkdir -p $SDK_DIR
+    # Install dependencies
+    - name: Install System Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget unzip python3 python3-pip
 
-          # Unzip the SDK tools into a temporary folder
-          echo "Unzipping command-line tools..."
-          unzip -o commandlinetools.zip -d $SDK_DIR/cmdline-tools-temp
+    # Download Android Command Line Tools
+    - name: Download Android SDK Command Line Tools
+      run: |
+        mkdir -p /home/runner/android-sdk
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O commandlinetools.zip
+        unzip -o commandlinetools.zip -d /home/runner/android-sdk/cmdline-tools
+        mkdir -p /home/runner/android-sdk/cmdline-tools/latest
+        mv /home/runner/android-sdk/cmdline-tools/cmdline-tools/* /home/runner/android-sdk/cmdline-tools/latest
 
-          # Check if the unzip worked and the directory structure is correct
-          ls -alh $SDK_DIR/cmdline-tools-temp
+    # Accept Android SDK Licenses
+    - name: Accept SDK Licenses
+      run: |
+        yes | /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
 
-          # Ensure the 'latest' directory exists
-          echo "Ensuring 'latest' directory exists..."
-          if [ ! -d "$SDK_DIR/cmdline-tools/latest" ]; then
-            echo "'latest' directory does not exist. Creating it..."
-            mkdir -p $SDK_DIR/cmdline-tools/latest
-          fi
+    # Install Build Tools, Platform Tools, and Extras
+    - name: Install Android Build Tools and Dependencies
+      run: |
+        /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager \
+          "platform-tools" \
+          "build-tools;33.0.2" \
+          "platforms;android-33" \
+          "extras;android;m2repository" \
+          "extras;google;m2repository"
 
-          # Move extracted files to the 'latest' directory
-          echo "Moving extracted cmdline-tools to the 'latest' directory..."
-          mv $SDK_DIR/cmdline-tools-temp/* $SDK_DIR/cmdline-tools/latest/
-
-          # Clean up the temporary folder
-          echo "Cleaning up temporary folder..."
-          rm -rf $SDK_DIR/cmdline-tools-temp
-
-          # Verify sdkmanager path
-          echo "Verifying sdkmanager executable..."
-          ls -alh $SDK_DIR/cmdline-tools/latest/bin
-
-          # Check if sdkmanager exists
-          if [ ! -f "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" ]; then
-            echo "sdkmanager not found! Something went wrong with the extraction."
+    # Verify or Install AIDL Independently
+    - name: Verify and Install AIDL
+      run: |
+        AIDL_PATH="/home/runner/android-sdk/build-tools/33.0.2/aidl"
+        if [ ! -f "$AIDL_PATH" ]; then
+          echo "AIDL is not installed. Attempting independent installation..."
+          /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2"
+          if [ -f "$AIDL_PATH" ]; then
+            echo "AIDL successfully installed."
+          else
+            echo "AIDL installation failed. Exiting..."
             exit 1
           fi
+        else
+          echo "AIDL found at $AIDL_PATH"
+        fi
 
-          # Accept licenses
-          echo "Accepting SDK licenses..."
-          yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --licenses
+    # Link Build Tools Path (if necessary)
+    - name: Link Build Tools Path
+      run: |
+        mkdir -p /home/runner/.buildozer/android/platform/android-sdk
+        ln -sf /home/runner/android-sdk/build-tools /home/runner/.buildozer/android/platform/android-sdk/
 
-          # Install platform tools and build tools
-          echo "Installing SDK components..."
-          $SDK_DIR/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3"
+    # Install Python dependencies (e.g., buildozer and cython)
+    - name: Install Python Dependencies
+      run: |
+        pip3 install --upgrade pip
+        pip3 install buildozer Cython
 
-      # Build the APK (customize this step as per your project requirements)
-      - name: Build APK
-        run: |
-          # Add your build commands here (e.g., using gradle, ant, etc.)
-          echo "Building APK..."
+    # Build APK
+    - name: Build APK
+      run: |
+        cd $GITHUB_WORKSPACE
+        buildozer android debug
+
+    # Archive APK for download
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: FlappyBird-APK
+        path: $GITHUB_WORKSPACE/bin/*.apk
