@@ -94,16 +94,21 @@ jobs:
         cd $GITHUB_WORKSPACE
         buildozer android debug
 
-    # Check if the APK was generated
+    # Check if the APK was generated and upload it
     - name: Check if APK was generated
       run: |
-        echo "Checking if APK exists..."
-        ls -lh $GITHUB_WORKSPACE/bin/*.apk
+        if [ -f "$GITHUB_WORKSPACE/bin/*.apk" ]; then
+          echo "APK file found, proceeding to upload."
+        else
+          echo "APK file not found. Exiting..."
+          exit 1
+        fi
 
     # Upload APK for download
     - name: Upload APK
-      if: success() && (exists('$GITHUB_WORKSPACE/bin/*.apk'))
-      uses: actions/upload-artifact@v3
-      with:
-        name: FlappyBird-APK
-        path: $GITHUB_WORKSPACE/bin/*.apk
+      run: |
+        echo "Uploading APK..."
+        mv $GITHUB_WORKSPACE/bin/*.apk $GITHUB_WORKSPACE/apk/
+        actions/upload-artifact@v3:
+          name: FlappyBird-APK
+          path: $GITHUB_WORKSPACE/apk/*.apk
