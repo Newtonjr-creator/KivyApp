@@ -1,4 +1,4 @@
-name: Build APK for Flappy Bird
+name: Build APK for flappybird 
 
 on:
   push:
