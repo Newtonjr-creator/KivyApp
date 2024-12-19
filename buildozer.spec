@@ -1,7 +1,7 @@
 [app]
 
 # (str) Title of your application
- title = flappy
+ title = KivyApp 
 
 # (str) Package name
  package.name = flappy
@@ -10,7 +10,7 @@
 package.domain = com.abhishek.app
 
 # (str) Source code where the main.py live
- source.dir = /storage/emulated/0/flappybird 
+ source.dir = .
 
 # (list) Source files to include (let empty to include all the files)
 source.include_exts = py,png,jpg,kv,atlas,wav
@@ -32,8 +32,8 @@ source.include_exts = py,png,jpg,kv,atlas,wav
 __version__  = 1.0.0
 
 # (str) Application versioning (method 2)
-# version.regex = __version__ = ['"](.*)['"]
-# version.filename = %(source.dir)s/main.py
+ version.regex = __version__ = ['"](.*)['"]
+ version.filename = %(source.dir)s/main.py
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
