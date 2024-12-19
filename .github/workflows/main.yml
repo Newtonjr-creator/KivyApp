@@ -42,22 +42,27 @@ jobs:
       # Step 4: Set up Android SDK
       - name: Set up Android SDK
         run: |
+          # Create Android SDK directory and download command line tools
           mkdir -p $HOME/android-sdk/cmdline-tools
           curl -o sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
           unzip -q sdk-tools.zip -d $HOME/android-sdk/cmdline-tools
           mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+          
+          # Set environment variables
           export ANDROID_HOME=$HOME/android-sdk
           export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
           
-          # Accept SDK licenses
+          # Accept licenses automatically
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
           
-          # Install required platforms and build tools
+          # Install required Android SDK components
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" \
             "platforms;android-34" \
             "build-tools;34.0.0" \
-            "build-tools;36.0.0-rc3"
+            "build-tools;36.0.0-rc3" \
+            "extra-android-m2repository" \
+            "android-ndk" 
 
       # Step 5: Set Environment Variables for Android SDK
       - name: Add environment variables
