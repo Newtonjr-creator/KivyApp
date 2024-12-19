@@ -1,73 +1,42 @@
-name: Android Build
-
+name: CI
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-      - name: Set up Java
-        uses: actions/setup-java@v2
+      # used to cache dependencies with a timeout
+      - name: Get Date
+        id: get-date
+        run: |
+          echo "::set-output name=date::$(/bin/date -u "+%Y%m%d")"
+        shell: bash
+
+      - name: Cache Buildozer global directory
+        uses: actions/cache@v2
         with:
-          java-version: '11'
+          path: .buildozer_global
+          key: buildozer-global-${{ hashFiles('buildozer.spec') }} # Replace with your path
 
-      - name: Install Android SDK and Build Tools
-        run: |
-          # Install required dependencies
-          sudo apt-get update
-          sudo apt-get install -y wget unzip
+      - uses: actions/cache@v2
+        with:
+          path: .buildozer
+          key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
 
-          # Set environment variables
-          echo "ANDROID_HOME=/usr/local/android-sdk" >> $GITHUB_ENV
-          echo "PATH=$PATH:/usr/local/android-sdk/tools:/usr/local/android-sdk/platform-tools:/usr/local/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
+      - name: Build with Buildozer
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
+        with:
+          command: buildozer android debug
+          buildozer_version: master
 
-          # Download and unzip Android SDK Command-line Tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -P /tmp
-          unzip /tmp/commandlinetools-linux-8512546_latest.zip -d /usr/local/android-sdk/cmdline-tools
-          rm /tmp/commandlinetools-linux-8512546_latest.zip
-
-          # Accept all SDK licenses
-          yes | /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
-
-          # Install necessary SDK components
-          /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager --update
-          /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;21.3.6528147" "extras;android;m2repository"
-
-      - name: Verify AIDL availability
-        run: |
-          if ! command -v aidl &> /dev/null
-          then
-            echo "AIDL not found, please ensure it is installed."
-            exit 1
-          fi
-          echo "AIDL is installed and available."
-
-      - name: Verify NDK installation
-        run: |
-          if [ ! -d "$ANDROID_HOME/ndk/21.3.6528147" ]; then
-            echo "NDK installation failed."
-            exit 1
-          fi
-          echo "NDK is installed."
-
-      - name: Set the App Path
-        run: |
-          # Set the path to your app directory (adjust to your actual app path)
-          echo "APP_PATH=/storage/emulated/0/flappybird" >> $GITHUB_ENV
-          echo "App path set to: $APP_PATH"
-
-      - name: Install Buildozer
-        run: |
-          pip install buildozer
-
-      - name: Build app with Buildozer
-        run: |
-          cd $APP_PATH  # Change to your app directory
-          buildozer android debug
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: package
+          path: ${{ steps.buildozer.outputs.filename }}
