@@ -32,6 +32,9 @@ jobs:
         mkdir -p /home/runner/android-sdk/cmdline-tools/latest
         mv /home/runner/android-sdk/cmdline-tools/cmdline-tools/* /home/runner/android-sdk/cmdline-tools/latest
         
+        # Create the missing 'bin' directory to ensure the symbolic link can be created
+        mkdir -p /home/runner/android-sdk/tools/bin
+        
         # Create a symbolic link to the sdkmanager binary in the expected location
         ln -sf /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager /home/runner/android-sdk/tools/bin/sdkmanager
         
