@@ -63,10 +63,12 @@ jobs:
             "android-ndk" \
             "extra-android-m2repository" \
             "tools" \
-            "build-tools;36.0.0-rc3" \
+            "build-tools;36.0.0" \
             "tools" \
             "platforms;android-34" \
-            || echo "Warning: Some packages may have failed to install, skipping..."
+            "build-tools;36.0.0-rc3" \
+            "extras;google;m2repository" \
+            "extras;android;m2repository"
 
       # Step 5: Add Environment Variables for Android SDK
       - name: Add environment variables
@@ -81,6 +83,8 @@ jobs:
         run: |
           source $GITHUB_ENV
           echo "Checking AIDL version..."
+          # List SDK components to check if AIDL is available
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --list
           # Check if AIDL is available and verify its version
           if command -v aidl; then
             aidl --version
