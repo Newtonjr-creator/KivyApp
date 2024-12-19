@@ -35,12 +35,17 @@ jobs:
         unzip -o commandlinetools.zip -d /home/runner/android-sdk/cmdline-tools
         rm commandlinetools.zip
 
-    # Ensure the sdkmanager path is correct and not moved
+    # Ensure the sdkmanager path is correct
     - name: Ensure SDK Manager Path is Correct
       run: |
-        # Ensure the latest cmdline-tools folder structure
+        # Create the correct folder structure
         mkdir -p /home/runner/android-sdk/cmdline-tools/latest
         mv /home/runner/android-sdk/cmdline-tools/cmdline-tools/* /home/runner/android-sdk/cmdline-tools/latest
+
+        # Create necessary symlink to make sdkmanager accessible for Buildozer
+        SDKMANAGER_PATH="/home/runner/.buildozer/android/platform/android-sdk/tools/bin"
+        mkdir -p $SDKMANAGER_PATH
+        ln -sf /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager $SDKMANAGER_PATH/sdkmanager
 
     # Accept Android SDK Licenses
     - name: Accept SDK Licenses
