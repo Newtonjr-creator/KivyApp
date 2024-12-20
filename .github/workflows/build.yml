@@ -13,15 +13,9 @@ jobs:
     - name: Checkout the code
       uses: actions/checkout@v2
 
-    - name: Print working directory and list files
-      run: |
-        pwd
-        ls -R
-
-    - name: Show Buildozer configuration
-      run: |
-        cat buildozer.spec
-        cat $(find . -name "buildozer.spec")  # Check if multiple buildozer.spec files exist
+    # Ensure the correct directory is used
+    - name: Change directory to flappybird
+      run: cd /home/runner/work/NewKivyApp/NewKivyApp/flappybird
 
     # Download Android SDK Command Line Tools
     - name: Download Android SDK Command Line Tools
@@ -35,9 +29,11 @@ jobs:
         mkdir -p /home/runner/android-sdk/tools/bin
         ln -sf /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager /home/runner/android-sdk/tools/bin/sdkmanager
 
+    # Accept Android SDK Licenses
     - name: Accept Android SDK Licenses
       run: yes | /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
 
+    # Install SDK Components
     - name: Install SDK Components
       run: |
         /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager \
@@ -46,22 +42,22 @@ jobs:
           "build-tools;33.0.2" \
           "ndk;25.2.9519653"
 
+    # Set up environment variables
     - name: Set up environment variables
       run: |
         echo "ANDROID_HOME=/home/runner/android-sdk" >> $GITHUB_ENV
         echo "ANDROID_SDK_ROOT=/home/runner/android-sdk" >> $GITHUB_ENV
 
-    - name: Install Python 3 and Buildozer
+    # Install Buildozer and dependencies
+    - name: Install dependencies and Build APK
       run: |
         sudo apt update
         sudo apt install -y python3 python3-pip
-        python3 -m pip install --upgrade pip
-        python3 -m pip install buildozer
+        pip install buildozer
+        cd /home/runner/work/NewKivyApp/NewKivyApp/flappybird
+        buildozer -v android debug
 
-    - name: Build APK using Buildozer
-      run: |
-        buildozer -v -c buildozer.spec android debug
-
+    # Upload the APK to GitHub Releases
     - name: Upload APK to GitHub Releases
       if: success()
       uses: ncipollo/release-action@v1
