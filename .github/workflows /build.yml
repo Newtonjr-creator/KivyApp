@@ -10,88 +10,63 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Checkout the code
     - name: Checkout the code
       uses: actions/checkout@v2
 
-    # 2. Create the Android SDK directory
-    - name: Create SDK directory
-      run: mkdir -p /home/runner/android-sdk/cmdline-tools
+    # List files to verify structure
+    - name: List files in repository
+      run: ls -R
 
-    # 3. Download Android SDK Command Line Tools
+    # Download Android SDK Command Line Tools
     - name: Download Android SDK Command Line Tools
       run: |
+        mkdir -p /home/runner/android-sdk/cmdline-tools
         wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O commandlinetools.zip
-
-    # 4. Unzip the downloaded command line tools
-    - name: Extract Android SDK Tools
-      run: unzip -o commandlinetools.zip -d /home/runner/android-sdk/cmdline-tools
-
-    # 5. Remove the zip file to save space
-    - name: Cleanup SDK ZIP
-      run: rm commandlinetools.zip
-
-    # 6. Move extracted tools to 'latest' directory
-    - name: Organize Android SDK Tools
-      run: |
+        unzip -o commandlinetools.zip -d /home/runner/android-sdk/cmdline-tools
+        rm commandlinetools.zip
         mkdir -p /home/runner/android-sdk/cmdline-tools/latest
         mv /home/runner/android-sdk/cmdline-tools/cmdline-tools/* /home/runner/android-sdk/cmdline-tools/latest
-
-    # 7. Create a symbolic link for sdkmanager
-    - name: Create SDKManager Symlink
-      run: |
         mkdir -p /home/runner/android-sdk/tools/bin
         ln -sf /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager /home/runner/android-sdk/tools/bin/sdkmanager
 
-    # 8. Accept Android SDK Licenses
+    # Accept Android SDK Licenses
     - name: Accept Android SDK Licenses
       run: yes | /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
 
-    # 9. Install Android Platform Tools
-    - name: Install Platform Tools
-      run: /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools"
+    # Install SDK Components
+    - name: Install SDK Components
+      run: |
+        /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager \
+          "platform-tools" \
+          "platforms;android-33" \
+          "build-tools;33.0.2" \
+          "ndk;25.2.9519653"
 
-    # 10. Install Android Platforms
-    - name: Install Android Platform 33
-      run: /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-33"
+    # Set up environment variables
+    - name: Set up environment variables
+      run: |
+        echo "ANDROID_HOME=/home/runner/android-sdk" >> $GITHUB_ENV
+        echo "ANDROID_SDK_ROOT=/home/runner/android-sdk" >> $GITHUB_ENV
 
-    # 11. Install Android Build Tools
-    - name: Install Build Tools 33.0.2
-      run: /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2"
+    # Install Python and Buildozer
+    - name: Install Python and Buildozer
+      run: |
+        sudo apt update
+        sudo apt install -y python3 python3-pip
+        pip install buildozer
 
-    # 12. Install NDK
-    - name: Install NDK
-      run: /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager "ndk;25.2.9519653"
+    # Set file permissions and verify buildozer.spec
+    - name: Ensure correct permissions
+      run: |
+        chmod 644 buildozer.spec
+        ls -l buildozer.spec
 
-    # 13. Set ANDROID_HOME environment variable
-    - name: Set ANDROID_HOME Variable
-      run: echo "ANDROID_HOME=/home/runner/android-sdk" >> $GITHUB_ENV
+    # Build APK with Buildozer
+    - name: Build APK with Buildozer
+      run: |
+        buildozer -v android debug
 
-    # 14. Set ANDROID_SDK_ROOT environment variable
-    - name: Set ANDROID_SDK_ROOT Variable
-      run: echo "ANDROID_SDK_ROOT=/home/runner/android-sdk" >> $GITHUB_ENV
-
-    # 15. Update system packages
-    - name: Update System Packages
-      run: sudo apt update
-
-    # 16. Install Python3 and pip
-    - name: Install Python3 and pip
-      run: sudo apt install -y python3 python3-pip
-
-    # 17. Install Buildozer
-    - name: Install Buildozer
-      run: pip install buildozer
-
-    # 18. Build the APK using Buildozer
-    - name: Build APK
-      run: buildozer -v android debug
-
-    # 19. Verify APK Output
-    - name: Verify APK Output
-      run: ls -al bin/*.apk
-
-    # 20. Upload APK to GitHub Releases
+    # Upload the APK to GitHub Releases
     - name: Upload APK to GitHub Releases
       if: success()
       uses: ncipollo/release-action@v1
