@@ -125,7 +125,7 @@ android.sdk_build_tools = 33.0.2
 #android.ndk_path =
 
 # (str) Android SDK directory (if empty, it will be automatically downloaded.)
-#android.sdk_path = /home/runner/android-sdk
+android.sdk_path = /home/runner/android-sdk
 
 # (str) ANT directory (if empty, it will be automatically downloaded.)
 #android.ant_path = 
