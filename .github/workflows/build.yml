@@ -1,11 +1,12 @@
-name: Build APK for FlappyBird
 
-on:
+ name: Build APK for FlappyBird
+
+ on:
   push:
     branches:
       - main
 
-jobs:
+ jobs:
   build:
     runs-on: ubuntu-latest
 
@@ -39,3 +40,4 @@ jobs:
       with:
         name: FlappyBird-APK
         path: bin/*.apk
+        
