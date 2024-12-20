@@ -1,66 +1,42 @@
-name: Build APK for flappybird
-
+name: CI
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout the code
-      uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    # Ensure the correct directory is used
-    - name: Change directory to flappybird
-      run: cd /home/runner/work/NewKivyApp/NewKivyApp/flappybird
+      # used to cache dependencies with a timeout
+      - name: Get Date
+        id: get-date
+        run: |
+          echo "::set-output name=date::$(/bin/date -u "+%Y%m%d")"
+        shell: bash
 
-    # Download Android SDK Command Line Tools
-    - name: Download Android SDK Command Line Tools
-      run: |
-        mkdir -p /home/runner/android-sdk/cmdline-tools
-        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O commandlinetools.zip
-        unzip -o commandlinetools.zip -d /home/runner/android-sdk/cmdline-tools
-        rm commandlinetools.zip
-        mkdir -p /home/runner/android-sdk/cmdline-tools/latest
-        mv /home/runner/android-sdk/cmdline-tools/cmdline-tools/* /home/runner/android-sdk/cmdline-tools/latest
-        mkdir -p /home/runner/android-sdk/tools/bin
-        ln -sf /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager /home/runner/android-sdk/tools/bin/sdkmanager
+      - name: Cache Buildozer global directory
+        uses: actions/cache@v2
+        with:
+          path: .buildozer_global
+          key: buildozer-global-${{ hashFiles('buildozer.spec') }} # Replace with your path
 
-    # Accept Android SDK Licenses
-    - name: Accept Android SDK Licenses
-      run: yes | /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+      - uses: actions/cache@v2
+        with:
+          path: .buildozer
+          key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
 
-    # Install SDK Components
-    - name: Install SDK Components
-      run: |
-        /home/runner/android-sdk/cmdline-tools/latest/bin/sdkmanager \
-          "platform-tools" \
-          "platforms;android-33" \
-          "build-tools;33.0.2" \
-          "ndk;25.2.9519653"
+      - name: Build with Buildozer
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
+        with:
+          command: buildozer android debug
+          buildozer_version: master
 
-    # Set up environment variables
-    - name: Set up environment variables
-      run: |
-        echo "ANDROID_HOME=/home/runner/android-sdk" >> $GITHUB_ENV
-        echo "ANDROID_SDK_ROOT=/home/runner/android-sdk" >> $GITHUB_ENV
-
-    # Install Buildozer and dependencies
-    - name: Install dependencies and Build APK
-      run: |
-        sudo apt update
-        sudo apt install -y python3 python3-pip
-        pip install buildozer
-        cd /home/runner/work/NewKivyApp/NewKivyApp/flappybird
-        buildozer -v android debug
-
-    # Upload the APK to GitHub Releases
-    - name: Upload APK to GitHub Releases
-      if: success()
-      uses: ncipollo/release-action@v1
-      with:
-        artifacts: 'bin/*.apk'
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: package
+          path: ${{ steps.buildozer.outputs.filename }}
