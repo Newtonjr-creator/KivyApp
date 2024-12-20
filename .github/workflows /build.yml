@@ -13,9 +13,15 @@ jobs:
     - name: Checkout the code
       uses: actions/checkout@v2
 
-    - name: List files for debugging
+    - name: Print working directory and list files
       run: |
-        ls -al  # List files to check if buildozer.spec is in the correct location
+        pwd
+        ls -R
+
+    - name: Show Buildozer configuration
+      run: |
+        cat buildozer.spec
+        cat $(find . -name "buildozer.spec")  # Check if multiple buildozer.spec files exist
 
     # Download Android SDK Command Line Tools
     - name: Download Android SDK Command Line Tools
@@ -45,12 +51,16 @@ jobs:
         echo "ANDROID_HOME=/home/runner/android-sdk" >> $GITHUB_ENV
         echo "ANDROID_SDK_ROOT=/home/runner/android-sdk" >> $GITHUB_ENV
 
-    - name: Install Buildozer and dependencies
+    - name: Install Python 3 and Buildozer
       run: |
         sudo apt update
         sudo apt install -y python3 python3-pip
-        pip install buildozer
-        buildozer -v android debug
+        python3 -m pip install --upgrade pip
+        python3 -m pip install buildozer
+
+    - name: Build APK using Buildozer
+      run: |
+        buildozer -v -c buildozer.spec android debug
 
     - name: Upload APK to GitHub Releases
       if: success()
