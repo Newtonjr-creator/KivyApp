@@ -1,10 +1,10 @@
 [app]
 
 # (str) Title of your application
-title = 
+title = Flappy Bird 
 
 # (str) Package name
-package.name = apk
+package.name = flappybird
 
 # (str) Package domain (needed for android/ios packaging)
 package.domain = com.abhishek.app
@@ -29,7 +29,7 @@ source.include_exts = py,png,jpg,kv,atlas,wav
 #source.exclude_patterns = license,images/*/*.jpg
 
 # (str) Application versioning (method 1)
-version = 
+version = 1.0.0
 
 # (str) Application versioning (method 2)
 # version.regex = __version__ = ['"](.*)['"]
