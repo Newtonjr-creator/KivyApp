@@ -3,7 +3,6 @@ import pygame
 import random
 import sys
 
-version = 1.0.0
 # Initialize Pygame
 pygame.init()
 
