@@ -2,16 +2,16 @@
 [app]
 
 # (str) Title of your application
-title = Flappybird
+title = FlappyBird
 
 # (str) Package name
-package.name = flappybird_beta
+package.name = flappybird.apk
 
 # (str) Package domain (needed for android/ios packaging)
 package.domain = com.abhishek.apk
 
 # (str) Source code where the main.py live
-source.dir = .
+source.dir = /storage/emulated/0/flappybird/main.py
 
 # (list) Source files to include (leave empty to include all the files)
 source.include_exts = py,png,jpg,kv,atlas,wav
@@ -30,12 +30,11 @@ source.include_patterns = gallery/*
 #source.exclude_patterns = license,images/*/*.jpg
 
 # (str) Application versioning (method 1)
-version = 1.0
+version = 1.0.0
 
 # (str) Application versioning (method 2)
-# version.regex = __version__ = ['"](.*)['"]
-# version.filename = %(source.dir)s/main.py
-
+version.regex = __version__ = ['"](.*)['"]
+version.filename = /storage/emulated/0/flappybird/main.py
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
 requirements = python3,kivy,kivymd,pygame,pillow 
