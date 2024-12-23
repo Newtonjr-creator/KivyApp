@@ -11,7 +11,7 @@ package.name = flappybird_beta
 package.domain = com.abhishek.apk
 
 # (str) Source code where the main.py live
-source.dir = /content 
+source.dir = .
 
 # (list) Source files to include (leave empty to include all the files)
 source.include_exts = py,png,jpg,kv,atlas,wav
@@ -30,7 +30,7 @@ source.include_patterns = gallery/*
 #source.exclude_patterns = license,images/*/*.jpg
 
 # (str) Application versioning (method 1)
-version = 0.1
+version = 1.0
 
 # (str) Application versioning (method 2)
 # version.regex = __version__ = ['"](.*)['"]
@@ -45,7 +45,7 @@ requirements = python3,kivy,kivymd,pygame,pillow
 # requirements.source.kivy = ../../kivy
 
 # (str) Presplash of the application
-presplash.filename = /content/gallery/sprites/message.png
+presplash.filename = storage/emulated/0/flappybird/gallery/sprites/message.png
 
 # (str) Icon of the application
 #icon.filename = %(source.dir)s/data/icon.png
@@ -105,10 +105,10 @@ android.permissions = android.permission.READ_EXTERNAL_STORAGE, android.permissi
 #android.features = android.hardware.usb.host
 
 # (int) Target Android API, should be as high as possible.
-android.api = 33
+#android.api = 33
 
 # (int) Minimum API your APK / AAB will support.
-android.minapi = 21
+#android.minapi = 21
 
 # (int) Android SDK version to use
 #android.sdk = 20
@@ -117,13 +117,13 @@ android.minapi = 21
 #android.ndk = 23b
 
 # (int) Android NDK API to use. This is the minimum API your app will support, it should usually match android.minapi.
-android.ndk_api = 21
+#android.ndk_api = 21
 
 # (str) Android NDK directory (if empty, it will be automatically downloaded.)
-android.ndk_path = /content/android-sdk/ndk/23.1.7779620
+#android.ndk_path = /content/android-sdk/ndk/23.1.7779620
 
 #y, it will be automatically downloaded.)
-android.sdk_path = /content/android-sdk
+#android.sdk_path = /content/android-sdk
 
 # (str) ANT directory (if empty, it will be automatically downloaded.)
 #android.ant_path =
