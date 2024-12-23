@@ -1,7 +1,8 @@
-#in diff path
+#flappy bird folder script 
 import pygame
 import random
 import sys
+
 
 # Initialize Pygame
 pygame.init()
