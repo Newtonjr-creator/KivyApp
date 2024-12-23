@@ -30,10 +30,10 @@ source.include_patterns = gallery/*
 #source.exclude_patterns = license,images/*/*.jpg
 
 # (str) Application versioning (method 1)
-__version__ = "1.0.0"
+version = 0.1
 
 # (str) Application versioning (method 2)
-version.regex = __version__ = ['"](.*)['"]
+#version.regex = __version__ = ['"](.*)['"]
 #version.filename = /storage/emulated/0/flappybird/main.py
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
