@@ -30,11 +30,11 @@ source.include_patterns = gallery/*
 #source.exclude_patterns = license,images/*/*.jpg
 
 # (str) Application versioning (method 1)
-version = 1.0.0
+__version__ = "1.0.0"
 
 # (str) Application versioning (method 2)
 version.regex = __version__ = ['"](.*)['"]
-version.filename = /storage/emulated/0/flappybird/main.py
+#version.filename = /storage/emulated/0/flappybird/main.py
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
 requirements = python3,kivy,kivymd,pygame,pillow 
@@ -44,7 +44,7 @@ requirements = python3,kivy,kivymd,pygame,pillow
 # requirements.source.kivy = ../../kivy
 
 # (str) Presplash of the application
-presplash.filename = storage/emulated/0/flappybird/gallery/sprites/message.png
+presplash.filename = /storage/emulated/0/flappybird/gallery/sprites/message.png
 
 # (str) Icon of the application
 #icon.filename = %(source.dir)s/data/icon.png
