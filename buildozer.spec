@@ -11,7 +11,7 @@ package.name = flappybird
 package.domain = com.abhishek.apk
 
 # (str) Source code where the main.py live
-source.dir = /storage/emulated/0/flappybird
+source.dir = storage/emulated/0/flappybird
 
 # (list) Source files to include (leave empty to include all the files)
 source.include_exts = py,png,jpg,kv,atlas,wav,pillow
